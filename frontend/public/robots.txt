@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /checkout
+Disallow: /unsubscribe
+
+Sitemap: https://tboyarts.netlify.app/sitemap.xml

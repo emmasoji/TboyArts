@@ -1,0 +1,967 @@
+/* =========================================================
+   TboyArts Admin
+   Centralized Admin Theme System
+   ========================================================= */
+
+.admin-layout {
+  min-height: 100vh;
+  --admin-bg: #0a0a0a;
+  --admin-surface: #111113;
+  --admin-surface-soft: #161618;
+  --admin-surface-muted: #18181b;
+  --admin-input: #161618;
+
+  --admin-border: rgba(255,255,255,.10);
+  --admin-border-soft: rgba(255,255,255,.05);
+
+  --admin-text: #ffffff;
+  --admin-text-muted: rgba(255,255,255,.55);
+  --admin-text-faint: rgba(255,255,255,.35);
+
+  --admin-overlay: rgba(0,0,0,.60);
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: var(--admin-bg);
+  color: var(--admin-text);
+}
+
+
+/* =========================================================
+   LIGHT THEME
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout {
+  --admin-bg: #ffffff;
+
+  /* Deeper white surfaces */
+  --admin-surface: #eeeeec;
+  --admin-surface-soft: #e8e8e5;
+  --admin-surface-muted: #e1e1de;
+
+  /* Inputs */
+  --admin-input: #f1f1ef;
+
+  /* Borders */
+  --admin-border: rgba(20,20,20,.10);
+  --admin-border-soft: rgba(20,20,20,.06);
+
+  /* Text */
+  --admin-text: #111111;
+  --admin-text-muted: rgba(17,17,17,.58);
+  --admin-text-faint: rgba(17,17,17,.38);
+
+  --admin-overlay: rgba(17,17,17,.35);
+}
+
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+.admin-layout input,
+.admin-layout textarea,
+.admin-layout select,
+.admin-layout button {
+  font: inherit;
+}
+
+.admin-layout,
+.admin-layout * {
+  transition-property:
+    background-color,
+    border-color,
+    color,
+    box-shadow,
+    opacity;
+
+  transition-duration: 200ms;
+}
+
+
+/* =========================================================
+   THEME HELPERS
+   ========================================================= */
+
+.admin-theme-bg {
+  background-color: var(--admin-bg);
+  color: var(--admin-text);
+}
+
+.admin-theme-surface {
+  background-color: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+.admin-theme-surface-soft {
+  background-color: var(--admin-surface-soft);
+  color: var(--admin-text);
+}
+
+.admin-theme-input {
+  background-color: var(--admin-input);
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+.admin-theme-border {
+  border-color: var(--admin-border);
+}
+
+.admin-theme-border-soft {
+  border-color: var(--admin-border-soft);
+}
+
+.admin-theme-text {
+  color: var(--admin-text);
+}
+
+.admin-theme-muted {
+  color: var(--admin-text-muted);
+}
+
+.admin-theme-faint {
+  color: var(--admin-text-faint);
+}
+
+
+/* =========================================================
+   DARK SURFACE COMPATIBILITY
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#111113\] {
+  background-color: var(--admin-surface) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#161618\] {
+  background-color: var(--admin-input) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#151517\] {
+  background-color: var(--admin-surface) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#18181b\] {
+  background-color: var(--admin-surface-muted) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#101010\] {
+  background-color: var(--admin-surface) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#0d0d0f\] {
+  background-color: var(--admin-surface-soft) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#0b0b0b\] {
+  background-color: var(--admin-surface-soft) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-\[\#080808\] {
+  background-color: var(--admin-surface-muted) !important;
+}
+
+
+/* =========================================================
+   LIGHT WHITE SURFACES
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout .bg-white\/5 {
+  background-color: #eeeeec !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-white\/\[0\.04\] {
+  background-color: #eeeeec !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-white\/\[0\.03\] {
+  background-color: #eeeeec !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-white\/\[0\.02\] {
+  background-color: #eeeeec !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .bg-white\/\[0\.015\] {
+  background-color: #eeeeec !important;
+}
+
+
+/* =========================================================
+   MAIN ADMIN BACKGROUND
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout main {
+  background: #ffffff !important;
+}
+
+
+/* =========================================================
+   HEADER / NAVBAR
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout header {
+  background: rgba(255,255,255,.72) !important;
+  border-color: rgba(0,0,0,.08) !important;
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout aside {
+  background: rgba(255,255,255,.94) !important;
+  color: #111111 !important;
+  border-color: rgba(0,0,0,.08) !important;
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+html[data-admin-theme="light"] .admin-layout aside [class*="bg-white/"] {
+  background-color: #e7e7e4 !important;
+}
+
+html[data-admin-theme="light"] .admin-layout aside button:hover {
+  background-color: #e1e1de !important;
+}
+
+
+/* =========================================================
+   BORDERS
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout .border-white\/10,
+html[data-admin-theme="light"] .admin-layout .border-white\/\[0\.08\],
+html[data-admin-theme="light"] .admin-layout .border-white\/5 {
+  border-color: var(--admin-border) !important;
+}
+
+
+/* =========================================================
+   TEXT
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout .text-white\/75 {
+  color: rgba(17,17,17,.75) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/70 {
+  color: rgba(17,17,17,.70) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/60 {
+  color: rgba(17,17,17,.60) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/50 {
+  color: rgba(17,17,17,.50) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/45 {
+  color: rgba(17,17,17,.45) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/40 {
+  color: rgba(17,17,17,.40) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/35 {
+  color: rgba(17,17,17,.35) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/30 {
+  color: rgba(17,17,17,.30) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/25 {
+  color: rgba(17,17,17,.25) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .text-white\/20 {
+  color: rgba(17,17,17,.20) !important;
+}
+
+
+/* =========================================================
+   HEADINGS
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout h1,
+html[data-admin-theme="light"] .admin-layout h2,
+html[data-admin-theme="light"] .admin-layout h3 {
+  color: #111111;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout button[class*="bg-white"] {
+  background-color: #e7e7e4 !important;
+  color: #111111 !important;
+}
+
+html[data-admin-theme="light"] .admin-layout button[class*="hover:bg-white"]:hover {
+  background-color: #d9d9d5 !important;
+}
+
+html[data-admin-theme="light"] .admin-layout button.bg-white {
+  background-color: #e1e1dd !important;
+  color: #111111 !important;
+}
+
+
+/* =========================================================
+   HOVER SURFACES
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout .hover\:bg-white\/5:hover {
+  background-color: #dcdcd9 !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .hover\:bg-white\/10:hover {
+  background-color: #d6d6d2 !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .hover\:bg-white\/\[0\.02\]:hover {
+  background-color: #e1e1de !important;
+}
+
+html[data-admin-theme="light"] .admin-layout .hover\:bg-white\/\[0\.04\]:hover {
+  background-color: #dcdcd9 !important;
+}
+
+
+/* =========================================================
+   TABLES
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout table thead,
+html[data-admin-theme="light"] .admin-layout table thead tr,
+html[data-admin-theme="light"] .admin-layout table th {
+  background-color: #e7e7e4 !important;
+  color: #111111 !important;
+}
+
+html[data-admin-theme="light"] .admin-layout table tbody tr:hover {
+  background-color: #eeeeec !important;
+}
+
+
+/* =========================================================
+   FORM CONTROLS
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout input,
+html[data-admin-theme="light"] .admin-layout textarea,
+html[data-admin-theme="light"] .admin-layout select {
+  background-color: #f1f1ef !important;
+  color: #111111 !important;
+  border-color: rgba(0,0,0,.12) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout input::placeholder,
+html[data-admin-theme="light"] .admin-layout textarea::placeholder {
+  color: rgba(0,0,0,.40) !important;
+}
+
+
+/* =========================================================
+   DROPDOWNS / MENUS
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout [role="menu"],
+html[data-admin-theme="light"] .admin-layout [role="listbox"] {
+  background-color: #eeeeec !important;
+  color: #111111 !important;
+  border-color: rgba(0,0,0,.10) !important;
+}
+
+
+/* =========================================================
+   MODALS / OVERLAYS
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout [role="dialog"] {
+  background-color: #eeeeec !important;
+  color: #111111 !important;
+  border-color: rgba(0,0,0,.10) !important;
+}
+
+html[data-admin-theme="light"] .admin-layout [class*="bg-black/"] {
+  color: #111111;
+}
+
+
+/* =========================================================
+   LOADING / EMPTY STATES
+   ========================================================= */
+
+html[data-admin-theme="light"] .admin-layout .animate-pulse {
+  background-color: #e7e7e4;
+}
+
+html[data-admin-theme="light"] .admin-layout [class*="skeleton"] {
+  background-color: #e7e7e4 !important;
+}
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+.admin-layout input:focus,
+.admin-layout textarea:focus,
+.admin-layout select:focus {
+  outline: none;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+.admin-layout::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-layout::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html[data-admin-theme="light"] .admin-layout::-webkit-scrollbar-thumb {
+  background: #d5d5d1;
+  border-radius: 999px;
+}
+
+html[data-admin-theme="dark"] .admin-layout::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.15);
+  border-radius: 999px;
+}
+
+/* ============================================================
+   PORTALED ADMIN ACTION MENUS
+   These menus are rendered directly into document.body,
+   so they intentionally do not depend on .admin-layout.
+   ============================================================ */
+
+.tboyarts-admin-portal {
+  color: var(--admin-text, #ffffff);
+}
+
+.tboyarts-admin-portal .border-white\/10 {
+  border-color: var(--admin-border, rgba(255,255,255,.10)) !important;
+}
+
+.tboyarts-admin-portal .text-white {
+  color: var(--admin-text, #ffffff) !important;
+}
+
+.tboyarts-admin-portal .text-white\/70 {
+  color: var(--admin-text-muted, rgba(255,255,255,.55)) !important;
+}
+
+.tboyarts-admin-portal .text-white\/60 {
+  color: var(--admin-text-muted, rgba(255,255,255,.55)) !important;
+}
+
+.tboyarts-admin-portal .text-white\/50 {
+  color: var(--admin-text-muted, rgba(255,255,255,.55)) !important;
+}
+
+.tboyarts-admin-portal .text-white\/40 {
+  color: var(--admin-text-faint, rgba(255,255,255,.35)) !important;
+}
+
+.tboyarts-admin-portal .text-white\/35 {
+  color: var(--admin-text-faint, rgba(255,255,255,.35)) !important;
+}
+
+.tboyarts-admin-portal .text-white\/30 {
+  color: var(--admin-text-faint, rgba(255,255,255,.35)) !important;
+}
+
+.tboyarts-admin-portal .text-white\/25 {
+  color: var(--admin-text-faint, rgba(255,255,255,.35)) !important;
+}
+
+/* Dark mode */
+html[data-admin-theme="dark"] .tboyarts-admin-portal {
+  --admin-surface: #111113;
+  --admin-surface-soft: #161618;
+  --admin-surface-muted: #18181b;
+  --admin-border: rgba(255,255,255,.10);
+  --admin-border-soft: rgba(255,255,255,.05);
+  --admin-text: #ffffff;
+  --admin-text-muted: rgba(255,255,255,.55);
+  --admin-text-faint: rgba(255,255,255,.35);
+}
+
+/* Dark mode portal surfaces */
+html[data-admin-theme="dark"] .tboyarts-admin-portal .bg-\[\#111113\] {
+  background-color: var(--admin-surface) !important;
+}
+
+html[data-admin-theme="dark"] .tboyarts-admin-portal .bg-white\/5 {
+  background-color: rgba(255,255,255,.05) !important;
+}
+
+html[data-admin-theme="dark"] .tboyarts-admin-portal .bg-white\/10 {
+  background-color: rgba(255,255,255,.10) !important;
+}
+
+/* Light mode */
+html[data-admin-theme="light"] .tboyarts-admin-portal {
+  --admin-surface: #eeeeec;
+  --admin-surface-soft: #e8e8e5;
+  --admin-surface-muted: #e1e1de;
+  --admin-border: rgba(20,20,20,.10);
+  --admin-border-soft: rgba(20,20,20,.06);
+  --admin-text: #111111;
+  --admin-text-muted: rgba(17,17,17,.58);
+  --admin-text-faint: rgba(17,17,17,.38);
+}
+
+/* Portaled artwork/order sheets */
+html[data-admin-theme="light"] .tboyarts-admin-portal .bg-\[\#111113\] {
+  background-color: var(--admin-surface) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .bg-white\/5 {
+  background-color: rgba(20,20,20,.05) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .bg-white\/10 {
+  background-color: rgba(20,20,20,.10) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .bg-white\/15 {
+  background-color: rgba(20,20,20,.15) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .hover\:bg-white\/5:hover {
+  background-color: rgba(20,20,20,.05) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .hover\:bg-white\/10:hover {
+  background-color: rgba(20,20,20,.10) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white {
+  color: var(--admin-text) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white\/70,
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white\/60 {
+  color: var(--admin-text-muted) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white\/50,
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white\/40,
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white\/35,
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white\/30,
+html[data-admin-theme="light"] .tboyarts-admin-portal .text-white\/25 {
+  color: var(--admin-text-faint) !important;
+}
+
+html[data-admin-theme="light"] .tboyarts-admin-portal .border-white\/10 {
+  border-color: var(--admin-border) !important;
+}
+
+/* Keep the backdrop dark in both themes for proper modal contrast */
+.tboyarts-admin-portal > .bg-black\/50,
+.tboyarts-admin-portal > .bg-black\/60 {
+  background-color: rgba(0,0,0,.50) !important;
+}
+
+/* =========================================================
+   ADMIN MODAL PORTAL THEME
+   Portaled modals live outside .admin-layout, so they need
+   their own theme scope.
+   ========================================================= */
+
+.admin-modal-portal {
+  --admin-bg: #0b0b0c;
+  --admin-surface: #111113;
+  --admin-surface-soft: #161618;
+  --admin-surface-muted: #18181b;
+  --admin-input: #161618;
+  --admin-border: rgba(255,255,255,.10);
+  --admin-text: #ffffff;
+  --admin-text-muted: rgba(255,255,255,.55);
+  --admin-text-faint: rgba(255,255,255,.35);
+
+  color: var(--admin-text);
+}
+
+html[data-admin-theme="light"] .admin-modal-portal {
+  --admin-bg: #ffffff;
+  --admin-surface: #eeeeec;
+  --admin-surface-soft: #e8e8e5;
+  --admin-surface-muted: #e1e1de;
+  --admin-input: #f1f1ef;
+  --admin-border: rgba(20,20,20,.10);
+  --admin-text: #111111;
+  --admin-text-muted: rgba(17,17,17,.58);
+  --admin-text-faint: rgba(17,17,17,.38);
+}
+/* Full-screen modal backdrop */
+.admin-modal-portal > .fixed.inset-0 {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Dark-theme modal surfaces */
+html[data-admin-theme="dark"] .admin-modal-portal .bg-\[\#111113\],
+html[data-admin-theme="dark"] .admin-modal-portal .bg-\[\#151517\] {
+  background-color: var(--admin-surface) !important;
+}
+
+/* Light-theme modal surfaces */
+html[data-admin-theme="light"] .admin-modal-portal .bg-\[\#111113\],
+html[data-admin-theme="light"] .admin-modal-portal .bg-\[\#151517\] {
+  background-color: var(--admin-surface) !important;
+}
+
+/* Theme-aware borders */
+html[data-admin-theme="light"] .admin-modal-portal .border-white\/10,
+html[data-admin-theme="light"] .admin-modal-portal .border-white\/5 {
+  border-color: var(--admin-border) !important;
+}
+
+/* Theme-aware text */
+html[data-admin-theme="light"] .admin-modal-portal .text-white {
+  color: var(--admin-text) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .text-white\/75 {
+  color: rgba(17,17,17,.75) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .text-white\/70 {
+  color: rgba(17,17,17,.70) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .text-white\/60 {
+  color: rgba(17,17,17,.60) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .text-white\/50 {
+  color: rgba(17,17,17,.50) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .text-white\/40 {
+  color: rgba(17,17,17,.40) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .text-white\/30 {
+  color: rgba(17,17,17,.38) !important;
+}
+
+/* Theme-aware white translucent surfaces */
+html[data-admin-theme="light"] .admin-modal-portal .bg-white\/5 {
+  background-color: rgba(17,17,17,.05) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .bg-white\/\[0\.03\] {
+  background-color: rgba(17,17,17,.03) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .bg-white\/\[0\.04\] {
+  background-color: rgba(17,17,17,.04) !important;
+}
+
+/* Backdrop: dark in dark mode, subtle light veil in light mode */
+html[data-admin-theme="dark"] .admin-modal-portal .bg-black\/50 {
+  background-color: rgba(0,0,0,.58) !important;
+}
+
+html[data-admin-theme="dark"] .admin-modal-portal .bg-black\/60 {
+  background-color: rgba(0,0,0,.64) !important;
+}
+
+html[data-admin-theme="dark"] .admin-modal-portal .bg-black\/70 {
+  background-color: rgba(0,0,0,.72) !important;
+}
+
+html[data-admin-theme="light"] .admin-modal-portal .bg-black\/50,
+html[data-admin-theme="light"] .admin-modal-portal .bg-black\/60,
+html[data-admin-theme="light"] .admin-modal-portal .bg-black\/70 {
+  background-color: rgba(255,255,255,.68) !important;
+}
+
+/* =========================================================
+   FULL-SCREEN ARTWORK EDITOR THEME
+   Portaled directly to document.body
+   ========================================================= */
+
+.admin-artwork-editor {
+  --admin-bg: #0b0b0c;
+  --admin-surface: #111113;
+  --admin-surface-soft: #161618;
+  --admin-surface-muted: #18181b;
+  --admin-input: #161618;
+  --admin-border: rgba(255, 255, 255, 0.10);
+  --admin-border-soft: rgba(255, 255, 255, 0.05);
+  --admin-text: #ffffff;
+  --admin-text-muted: rgba(255, 255, 255, 0.55);
+  --admin-text-faint: rgba(255, 255, 255, 0.35);
+
+  color: var(--admin-text);
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor {
+  --admin-bg: #ffffff;
+  --admin-surface: #eeeeec;
+  --admin-surface-soft: #e8e8e5;
+  --admin-surface-muted: #e1e1de;
+  --admin-input: #f1f1ef;
+  --admin-border: rgba(20, 20, 20, 0.10);
+  --admin-border-soft: rgba(20, 20, 20, 0.06);
+  --admin-text: #111111;
+  --admin-text-muted: rgba(17, 17, 17, 0.58);
+  --admin-text-faint: rgba(17, 17, 17, 0.38);
+}
+
+/* Editor surfaces */
+.admin-artwork-editor .bg-\[\#0d0d0f\] {
+  background-color: var(--admin-bg) !important;
+}
+
+/* Borders */
+html[data-admin-theme="light"] .admin-artwork-editor .border-white\/10 {
+  border-color: var(--admin-border) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .border-white\/5 {
+  border-color: var(--admin-border-soft) !important;
+}
+
+/* Text */
+html[data-admin-theme="light"] .admin-artwork-editor .text-white {
+  color: var(--admin-text) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .text-white\/75 {
+  color: rgba(17, 17, 17, 0.75) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .text-white\/70 {
+  color: rgba(17, 17, 17, 0.70) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .text-white\/60 {
+  color: rgba(17, 17, 17, 0.60) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .text-white\/50 {
+  color: rgba(17, 17, 17, 0.50) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .text-white\/40 {
+  color: rgba(17, 17, 17, 0.40) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .text-white\/30 {
+  color: rgba(17, 17, 17, 0.38) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .text-white\/25 {
+  color: rgba(17, 17, 17, 0.32) !important;
+}
+
+/* White translucent surfaces */
+html[data-admin-theme="light"] .admin-artwork-editor .bg-white\/5 {
+  background-color: rgba(17, 17, 17, 0.05) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .bg-white\/10 {
+  background-color: rgba(17, 17, 17, 0.08) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .bg-white\/20 {
+  background-color: rgba(17, 17, 17, 0.12) !important;
+}
+
+/* Backdrop stays visually neutral in both themes */
+.admin-artwork-editor > .artwork-backdrop-fade {
+  background-color: rgba(0, 0, 0, 0.60) !important;
+}
+
+
+/* Artwork editor select controls */
+.admin-artwork-editor .admin-artwork-select {
+  background-color: #161618;
+  color: #ffffff;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .admin-artwork-select {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border-color: rgba(20, 20, 20, 0.10) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .admin-artwork-select option {
+  background-color: #ffffff;
+  color: #111111;
+}
+
+
+/* Artwork editor save button */
+.admin-artwork-editor .admin-artwork-save {
+  background-color: #ffffff;
+  color: #111111;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .admin-artwork-save {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-editor .admin-artwork-save:hover {
+  background-color: #252525 !important;
+}
+
+
+/* Delete artwork modal */
+.admin-artwork-delete-modal {
+  color: #ffffff;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal {
+  color: #111111;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .bg-\[\#111113\] {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .border-white\/10 {
+  border-color: rgba(20, 20, 20, 0.10) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .text-white\/35 {
+  color: rgba(17, 17, 17, 0.38) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .text-white\/30 {
+  color: rgba(17, 17, 17, 0.38) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .text-white\/50 {
+  color: rgba(17, 17, 17, 0.55) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .text-white\/80 {
+  color: rgba(17, 17, 17, 0.80) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .text-white {
+  color: #111111 !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .hover\:bg-white\/10:hover {
+  background-color: rgba(17, 17, 17, 0.06) !important;
+}
+
+html[data-admin-theme="light"] .admin-artwork-delete-modal .hover\:text-white:hover {
+  color: #111111 !important;
+}
+
+
+/* =========================================================
+   Artwork Actions Menu
+   ========================================================= */
+
+
+
+
+/* Theme-aware admin action button */
+html[data-admin-theme="dark"] {
+  --admin-action-bg: #ffffff;
+  --admin-action-text: #000000;
+}
+
+html[data-admin-theme="light"] {
+  --admin-action-bg: #000000;
+  --admin-action-text: #ffffff;
+}
+
+/* =========================================================
+   STATIC ADMIN NAVIGATION
+   Sidebar stays fixed; only the admin content scrolls.
+   ========================================================= */
+
+.admin-layout {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.admin-main {
+  height: 100vh;
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: var(--admin-bg);
+}
+
+@media (max-width: 768px) {
+  .admin-main {
+    width: 100%;
+  }
+
+  .admin-header {
+    z-index: 90;
+  }
+}
+
+
+/* =========================================================
+   ADMIN CONTENT SCROLL
+   ========================================================= */
+
+.admin-layout {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.admin-main {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.admin-main > .admin-header {
+  flex-shrink: 0;
+}
+
+.admin-main > div:last-child {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
