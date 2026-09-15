@@ -14,11 +14,14 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <div className="text-sm tracking-wide opacity-60">
-        Loading TboyArts...
+    <main className="fixed inset-0 z-[10000] flex min-h-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <div className="flex flex-col items-center justify-center">
+        <div className="mb-5 h-7 w-7 animate-spin rounded-full border-2 border-current border-t-transparent opacity-60" />
+        <p className="text-sm opacity-70">
+          Please wait a moment
+        </p>
       </div>
-    </div>
+    </main>
   );
 }
 
