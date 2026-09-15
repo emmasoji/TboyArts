@@ -1,11 +1,10 @@
+import API_URL from "../config/api";
+
 import { useEffect, useState } from "react";
 import SEO from "../components/seo/SEO";
 import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, MailX, Loader2 } from "lucide-react";
 import ErrorState from "../components/errors/ErrorState";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function Unsubscribe() {
   const { token } = useParams<{ token: string }>();

@@ -1,3 +1,5 @@
+import API_URL from "../../config/api";
+
 import { useEffect, useState } from "react";
 import {
   Search,
@@ -40,7 +42,7 @@ type TrackingOrder = {
 };
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  API_URL;
 
 function formatCurrency(value: number | null) {
   return `₦${Number(value ?? 0).toLocaleString("en-NG")}`;

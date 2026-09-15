@@ -1,3 +1,5 @@
+import API_URL from "../../../../config/api";
+
 import { useEffect, useRef, useState } from "react";
 import {
   FileText,
@@ -182,8 +184,7 @@ export default function UpdateNewsletter() {
       setSendResult(null);
 
       const apiBaseUrl =
-        import.meta.env.VITE_API_URL ||
-        "http://localhost:8000";
+        API_URL;
 
       const {
         data: { session },

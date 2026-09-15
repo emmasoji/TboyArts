@@ -1,3 +1,5 @@
+import API_URL from "../../../config/api";
+
 import {
   Check,
   Image,
@@ -47,8 +49,7 @@ export default function AdminSettings() {
   const [logoError, setLogoError] = useState("");
 
   const apiBaseUrl =
-    import.meta.env.VITE_API_BASE_URL ??
-    "http://localhost:8000";
+    API_URL;
 
   const publicLogoUrl =
     `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/Logo/logo.png`;

@@ -1,3 +1,5 @@
+import API_URL from "../../../../config/api";
+
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
@@ -238,8 +240,7 @@ export default function WelcomeNewsletter() {
     useRef<HTMLInputElement | null>(null);
 
   const apiBaseUrl =
-    import.meta.env.VITE_API_BASE_URL ??
-    "http://localhost:8000";
+    API_URL;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

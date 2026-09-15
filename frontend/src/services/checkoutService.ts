@@ -1,7 +1,9 @@
+import API_URL from "../config/api";
+
 import type { CartItem } from "../contexts/CartContext";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  API_URL;
 
 export interface CustomerDetails {
   full_name: string;

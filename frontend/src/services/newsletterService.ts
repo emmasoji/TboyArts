@@ -1,3 +1,5 @@
+import API_URL from "../config/api";
+
 import { supabase } from "../lib/supabase";
 
 export interface NewsletterSubscriber {
@@ -217,7 +219,7 @@ export async function subscribeToNewsletter(
   }
 
   const apiBaseUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:8000";
+    API_URL;
 
   const response = await fetch(
     `${apiBaseUrl}/api/newsletter/subscribe`,

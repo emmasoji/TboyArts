@@ -1,3 +1,5 @@
+import API_URL from "../../../config/api";
+
 import { useEffect, useState } from "react";
 import { HardDrive } from "lucide-react";
 import { useAdminTheme } from "../../../contexts/AdminThemeContext";
@@ -13,7 +15,7 @@ type StorageData = {
 };
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  API_URL;
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
