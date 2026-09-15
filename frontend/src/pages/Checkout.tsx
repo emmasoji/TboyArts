@@ -88,11 +88,20 @@ export default function Checkout() {
   } | null>(null);
 
   const [pendingOrderLoading, setPendingOrderLoading] = useState(false);
+  const [pendingOrderDetectionLoading, setPendingOrderDetectionLoading] =
+    useState(true);
+
+  useEffect(() => {
+    if (!pendingOrderDetectionLoading && !countryDetectionLoading) {
+      setCheckoutInitializing(false);
+    }
+  }, [pendingOrderDetectionLoading, countryDetectionLoading]);
 
   const [orderCancelledNotice, setOrderCancelledNotice] = useState(false);
   const [orderCancelledFading, setOrderCancelledFading] = useState(false);
   const [orderCancelledCountdown, setOrderCancelledCountdown] = useState(5);
 
+  const [checkoutInitializing, setCheckoutInitializing] = useState(true);
   const [loading, setLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentPreparing, setPaymentPreparing] = useState(false);
@@ -308,6 +317,10 @@ export default function Checkout() {
         if (!cancelled && items.length === 0 && !paidOrder) {
           navigate("/shop", { replace: true });
         }
+      } finally {
+        if (!cancelled) {
+          setPendingOrderDetectionLoading(false);
+        }
       }
     }
 
@@ -315,6 +328,7 @@ export default function Checkout() {
 
     return () => {
       cancelled = true;
+      setPendingOrderDetectionLoading(false);
     };
   }, [navigate, paidOrder, items.length]);
 
@@ -725,6 +739,30 @@ export default function Checkout() {
           : "Unable to start payment.",
       );
     }
+  }
+
+  if (checkoutInitializing || pendingOrderDetectionLoading) {
+    return (
+      <>
+        <SEO
+          title="Checkout — TboyArts"
+          description="Preparing your TboyArts checkout."
+          noIndex
+        />
+
+        <main className="fixed inset-0 z-[10000] flex min-h-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]">
+          <div className="flex flex-col items-center justify-center">
+            <Loader2
+              size={28}
+              className="mb-5 animate-spin opacity-60"
+            />
+            <p className="text-sm opacity-70">
+              Please wait a moment
+            </p>
+          </div>
+        </main>
+      </>
+    );
   }
 
   if (step === "verifying") {
