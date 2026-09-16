@@ -121,6 +121,7 @@ export default function AdminLayout() {
           "flex-1",
           "flex",
           "flex-col",
+          "overflow-hidden",
           "lg:ml-64",
           "transition-colors duration-300",
           isLight

@@ -2,7 +2,7 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { AdminSection } from "./AdminLayout";
 import { useAdminTheme } from "../../contexts/AdminThemeContext";
 import { supabase } from "../../lib/supabase";
@@ -20,39 +20,6 @@ export default function AdminHeader({
   const isLight = theme === "light";
 
   const [loggingOut, setLoggingOut] = useState(false);
-
-  const [showHeader, setShowHeader] =
-    useState(true);
-
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
-
-    const handleScroll = () => {
-      const currentScrollY =
-        window.scrollY;
-
-      if (currentScrollY <= 10) {
-        setShowHeader(true);
-      } else if (
-        currentScrollY < lastScrollY
-      ) {
-        setShowHeader(true);
-      } else if (
-        currentScrollY > lastScrollY
-      ) {
-        setShowHeader(false);
-      }
-
-      lastScrollY = currentScrollY;
-    };
-
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      { passive: true },
-    );
-
-  }, []);
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -75,11 +42,7 @@ export default function AdminHeader({
         "border-b",
         "px-5 py-5 sm:px-8 sm:py-6",
         "backdrop-blur-xl",
-        "transition-transform duration-300 ease-out",
-
-        showHeader
-          ? "translate-y-0"
-          : "-translate-y-full",
+        "transition-colors duration-300",
 
         isLight
           ? "border-neutral-200/80 bg-[#f6f5f2]/90"
