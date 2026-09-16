@@ -17,6 +17,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://tboyarts.netlify.app",
+        "https://tboyarts.shop",
     ],
     allow_credentials=True,
     allow_methods=["*"],
