@@ -5,4 +5,4 @@ Disallow: /admin
 Disallow: /checkout
 Disallow: /unsubscribe
 
-Sitemap: https://tboyarts.netlify.app/sitemap.xml
+Sitemap: https://www.tboyarts.shop/sitemap.xml

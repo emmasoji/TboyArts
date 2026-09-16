@@ -8,7 +8,7 @@ type SEOProps = {
 
 const DEFAULT_TITLE = "TboyArts — Contemporary Art";
 const SITE_URL =
-  import.meta.env.VITE_SITE_URL || "https://tboyarts.netlify.app";
+  import.meta.env.VITE_SITE_URL || "https://www.tboyarts.shop";
 
 export default function SEO({
   title,
