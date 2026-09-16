@@ -33,7 +33,13 @@ type OrderFilter =
   | "pending"
   | "cancelled";
 
-export default function Orders() {
+interface OrdersProps {
+  initialOrderId?: string | null;
+}
+
+export default function Orders({
+  initialOrderId = null,
+}: OrdersProps) {
   const [orders, setOrders] =
     useState<Order[]>([]);
 
@@ -67,6 +73,14 @@ export default function Orders() {
   useEffect(() => {
     loadOrders();
   }, []);
+
+  useEffect(() => {
+    if (!initialOrderId || loading) return;
+
+    loadOrderDetails(initialOrderId).then(() => {
+      setShowDetails(true);
+    });
+  }, [initialOrderId, loading]);
 
   async function loadOrders() {
     try {

@@ -22,6 +22,14 @@ export type AdminSection =
   | "settings";
 
 export default function AdminLayout() {
+  const [initialOrderId] = useState<string | null>(() => {
+    const orderId = new URLSearchParams(
+      window.location.search,
+    ).get("order");
+
+    return orderId?.trim() || null;
+  });
+
   const [section, setSection] = useState<AdminSection>(() => {
     const savedSection = localStorage.getItem("tboyarts-admin-section");
 
@@ -53,12 +61,22 @@ export default function AdminLayout() {
     });
   }, [section]);
 
+  useEffect(() => {
+    if (!initialOrderId) return;
+
+    setSection("orders");
+    localStorage.setItem(
+      "tboyarts-admin-section",
+      "orders",
+    );
+  }, [initialOrderId]);
+
   const renderPage = () => {
     switch (section) {
       case "artworks":
         return <Artworks />;
       case "orders":
-        return <Orders />;
+        return <Orders initialOrderId={initialOrderId} />;
       case "customers":
         return <Customers />;
       case "artist":

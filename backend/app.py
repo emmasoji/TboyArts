@@ -6,6 +6,7 @@ from routes.payments import router as payments_router
 from routes.storage import router as storage_router
 from routes.tracking import router as tracking_router
 from routes.newsletter import router as newsletter_router
+from routes.admin_orders import router as admin_orders_router
 
 app = FastAPI(
     title="TboyArts API",
@@ -30,6 +31,7 @@ app.include_router(payments_router)
 app.include_router(storage_router)
 app.include_router(tracking_router)
 app.include_router(newsletter_router)
+app.include_router(admin_orders_router)
 
 
 @app.get("/api/health")

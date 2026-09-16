@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import API_URL from "../config/api";
 
 export type OrderStatus =
   | "pending"
@@ -244,36 +245,51 @@ export async function updateOrderStatus(
   id: string,
   status: OrderStatus,
 ): Promise<Order> {
-  const { data, error } =
-    await supabase
-      .from("orders")
-      .update({
-        status,
-        updated_at:
-          new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (error) {
-    console.error(
-      "UPDATE ORDER STATUS ERROR:",
-      error,
-    );
-
+  if (!session?.access_token) {
     throw new Error(
-      error.message ||
+      "Your admin session has expired. Please sign in again.",
+    );
+  }
+
+  const response = await fetch(
+    `${API_URL}/api/admin/orders/${id}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ status }),
+    },
+  );
+
+  let result: {
+    detail?: string;
+    success?: boolean;
+  } = {};
+
+  try {
+    result = await response.json();
+  } catch {
+    // Keep the HTTP status as the source of truth when
+    // the backend does not return JSON.
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      result.detail ||
         "Failed to update order status.",
     );
   }
 
-  return mapOrder(data);
+  // Fetch the complete order again so existing order items
+  // remain available to the admin details modal.
+  return getOrder(id);
 }
-
-/*
- * CANCEL ORDER
- */
 
 export async function cancelOrder(
   id: string,
