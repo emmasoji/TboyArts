@@ -359,23 +359,48 @@ def _email_html(
 
           <tr>
             <td
-              align="center"
               style="
-                padding:30px 24px 24px;
+                padding:32px 32px 28px;
                 border-bottom:1px solid #eeeeee;
               "
             >
-              <img
-                src="{logo_url}"
-                alt="TboyArts"
-                width="90"
-                style="
-                  display:block;
-                  width:90px;
-                  max-width:90px;
-                  height:auto;
-                "
-              />
+              <table
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+              >
+                <tr>
+                  <td valign="middle">
+                    <img
+                      src="{logo_url}"
+                      alt=""
+                      width="20"
+                      height="20"
+                      style="
+                        display:block;
+                        width:20px;
+                        height:20px;
+                        object-fit:contain;
+                        border:0;
+                      "
+                    />
+                  </td>
+
+                  <td
+                    valign="middle"
+                    style="
+                      padding-left:8px;
+                      font-family:Arial,Helvetica,sans-serif;
+                      font-size:18px;
+                      line-height:20px;
+                      font-weight:600;
+                      color:#171717;
+                    "
+                  >
+                    TboyArts
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -385,23 +410,45 @@ def _email_html(
           <tr>
             <td
               align="center"
-              style="padding:38px 24px 12px;"
+              style="padding:38px 32px 12px;"
             >
 
+              <!-- Static checkmark aura -->
+
               <div style="
-                width:64px;
-                height:64px;
+                width:96px;
+                height:96px;
                 margin:0 auto 20px;
                 border-radius:50%;
-                background:#15803d;
-                color:#ffffff;
-                font-family:Arial,Helvetica,sans-serif;
-                font-size:34px;
-                line-height:64px;
-                font-weight:bold;
+                background:#f0f0ee;
                 text-align:center;
               ">
-                ✓
+                <div style="
+                  display:inline-block;
+                  margin-top:10px;
+                  width:76px;
+                  height:76px;
+                  border-radius:50%;
+                  background:#e7e7e4;
+                  text-align:center;
+                ">
+                  <div style="
+                    display:inline-block;
+                    margin-top:10px;
+                    width:56px;
+                    height:56px;
+                    border-radius:50%;
+                    background:#171717;
+                    color:#ffffff;
+                    font-family:Arial,Helvetica,sans-serif;
+                    font-size:30px;
+                    line-height:56px;
+                    font-weight:700;
+                    text-align:center;
+                  ">
+                    ✓
+                  </div>
+                </div>
               </div>
 
               <h1 style="
@@ -471,8 +518,8 @@ def _email_html(
                 cellspacing="0"
                 border="0"
                 style="
-                  background:#fafafa;
-                  border-left:3px solid #c9a227;
+                  background:#f7f7f5;
+                  border:1px solid #e5e5e5;
                 "
               >
                 <tr>
@@ -622,28 +669,19 @@ def _email_html(
             <td
               align="center"
               style="
-                padding:24px;
-                background:#111111;
+                padding:20px 24px 8px;
+                background:#ffffff;
               "
             >
 
-              <div style="
-                font-family:Georgia,'Times New Roman',serif;
-                font-size:18px;
-                color:#c9a227;
-                font-weight:600;
-              ">
-                TboyArts
-              </div>
-
               <p style="
-                margin:8px 0 0;
+                margin:0;
                 font-family:Arial,Helvetica,sans-serif;
-                font-size:11px;
+                font-size:12px;
                 line-height:1.6;
-                color:#aaaaaa;
+                color:#999999;
               ">
-                Art that speaks beyond words.
+                Thank you for choosing TboyArts.
               </p>
 
 
