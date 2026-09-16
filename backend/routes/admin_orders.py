@@ -2,10 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from models.admin_order import UpdateOrderStatusRequest
 from services.admin_auth_service import require_authenticated_admin
-from services.admin_order_email_service import (
-    AdminOrderEmailError,
-    send_completed_order_email,
-)
 from utils.supabase import select, update
 
 
@@ -34,10 +30,6 @@ async def update_order_status_endpoint(
                 detail="Order not found.",
             )
 
-        current_status = str(
-            orders[0].get("status") or ""
-        ).lower()
-
         new_status = request.status
 
         updated_rows = await update(
@@ -54,41 +46,9 @@ async def update_order_status_endpoint(
                 detail="Order could not be updated.",
             )
 
-        notification = {
-            "sent": False,
-            "skipped": True,
-        }
-
-        if (
-            new_status == "completed"
-            and current_status != "completed"
-        ):
-            try:
-                await send_completed_order_email(
-                    order_id
-                )
-
-                notification = {
-                    "sent": True,
-                    "skipped": False,
-                }
-
-            except AdminOrderEmailError as exc:
-                print(
-                    "ADMIN COMPLETED ORDER EMAIL ERROR:",
-                    exc,
-                )
-
-                notification = {
-                    "sent": False,
-                    "skipped": False,
-                    "error": str(exc),
-                }
-
         return {
             "success": True,
             "order": updated_rows[0],
-            "notification": notification,
         }
 
     except HTTPException:

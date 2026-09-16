@@ -90,6 +90,7 @@ export default function Checkout() {
   const [pendingOrderLoading, setPendingOrderLoading] = useState(false);
   const [pendingOrderDetectionLoading, setPendingOrderDetectionLoading] =
     useState(true);
+  const [checkoutInitializing, setCheckoutInitializing] = useState(true);
 
   useEffect(() => {
     if (!pendingOrderDetectionLoading && !countryDetectionLoading) {
@@ -100,8 +101,6 @@ export default function Checkout() {
   const [orderCancelledNotice, setOrderCancelledNotice] = useState(false);
   const [orderCancelledFading, setOrderCancelledFading] = useState(false);
   const [orderCancelledCountdown, setOrderCancelledCountdown] = useState(5);
-
-  const [checkoutInitializing, setCheckoutInitializing] = useState(true);
   const [loading, setLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentPreparing, setPaymentPreparing] = useState(false);

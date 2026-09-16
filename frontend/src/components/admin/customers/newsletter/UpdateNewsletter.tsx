@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   FileText,
   Upload,
-  Eye,
-  Save,
+  ChevronDown,
   Send,
   X,
   Image as ImageIcon,
@@ -24,7 +23,6 @@ export default function UpdateNewsletter() {
   const [markdown, setMarkdown] = useState("");
   const [preview, setPreview] = useState("");
   const [images, setImages] = useState<NewsletterImage[]>([]);
-  const [saved, setSaved] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [sendResult, setSendResult] = useState<{
@@ -32,7 +30,7 @@ export default function UpdateNewsletter() {
     failed: number;
     total: number;
   } | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
+  const [previewExpanded, setPreviewExpanded] = useState(true);
 
   const [showSendConfirmation, setShowSendConfirmation] =
     useState(false);
@@ -66,7 +64,6 @@ export default function UpdateNewsletter() {
     if (!file) return;
 
     setError("");
-    setSaved(false);
     setSent(false);
     setSendResult(null);
 
@@ -85,7 +82,7 @@ export default function UpdateNewsletter() {
 
       setFileName(file.name);
       setMarkdown(content);
-      setShowPreview(true);
+      setPreviewExpanded(true);
     } catch (err) {
       console.error("Failed to read newsletter file:", err);
       setError("Failed to read the newsletter file.");
@@ -99,7 +96,6 @@ export default function UpdateNewsletter() {
     setMarkdown("");
     setPreview("");
     setImages([]);
-    setSaved(false);
     setSent(false);
     setSendResult(null);
     setError("");
@@ -109,35 +105,9 @@ export default function UpdateNewsletter() {
     }
   }
 
-  function handleSave() {
-    if (!markdown.trim()) {
-      setError("Upload a newsletter Markdown file before saving.");
-      return;
-    }
-
-    localStorage.setItem(
-      "tboyarts_update_newsletter",
-      JSON.stringify({
-        fileName,
-        markdown,
-        savedAt: new Date().toISOString(),
-      }),
-    );
-
-    setSaved(true);
-    setSent(false);
-    setSendResult(null);
-    setError("");
-  }
-
   async function handleSend() {
     if (!markdown.trim()) {
       setError("Upload a newsletter Markdown file first.");
-      return;
-    }
-
-    if (!saved) {
-      setError("Save the newsletter before sending it.");
       return;
     }
 
@@ -171,20 +141,12 @@ export default function UpdateNewsletter() {
       return;
     }
 
-    if (!saved) {
-      setError("Save the newsletter before sending it.");
-      setShowSendConfirmation(false);
-      return;
-    }
-
     try {
       setSending(true);
       setError("");
       setSent(false);
       setSendResult(null);
-
-      const apiBaseUrl =
-        API_URL;
+      setShowSendConfirmation(false);
 
       const {
         data: { session },
@@ -198,7 +160,7 @@ export default function UpdateNewsletter() {
       }
 
       const response = await fetch(
-        `${apiBaseUrl}/api/newsletter/send`,
+        `${API_URL}/api/newsletter/send`,
         {
           method: "POST",
           headers: {
@@ -247,7 +209,6 @@ export default function UpdateNewsletter() {
 
       setSendResult(result);
       setSent(true);
-      setShowSendConfirmation(false);
 
       if (result.failed > 0) {
         setError(
@@ -442,31 +403,36 @@ export default function UpdateNewsletter() {
 
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
 
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+            <button
+              type="button"
+              onClick={() =>
+                setPreviewExpanded((expanded) => !expanded)
+              }
+              className="flex w-full items-center justify-between border-b border-white/10 px-5 py-4 text-left transition hover:bg-white/[0.03]"
+              aria-expanded={previewExpanded}
+            >
 
-              <div>
-                <p className="text-xs uppercase tracking-wider text-white/30">
-                  Preview
-                </p>
+              <p className="text-xs uppercase tracking-wider text-white/30">
+                Preview
+              </p>
 
-                <p className="mt-1 text-sm text-white/60">
-                  Email content
-                </p>
-              </div>
-
-              <Eye
+              <ChevronDown
                 size={18}
-                className="text-white/30"
+                className={`text-white/30 transition-transform duration-200 ${
+                  previewExpanded ? "rotate-180" : ""
+                }`}
               />
 
-            </div>
+            </button>
 
-            <div
-              className="prose prose-invert max-w-none overflow-auto p-5 text-sm leading-7"
-              dangerouslySetInnerHTML={{
-                __html: preview,
-              }}
-            />
+            {previewExpanded && (
+              <div
+                className="prose prose-invert max-w-none overflow-auto p-5 text-sm leading-7"
+                dangerouslySetInnerHTML={{
+                  __html: preview,
+                }}
+              />
+            )}
 
           </div>
 
@@ -519,7 +485,7 @@ export default function UpdateNewsletter() {
         </div>
       )}
 
-      {/* ACTIONS */}
+      {/* ACTION */}
 
       {markdown && (
         <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:p-6">
@@ -530,107 +496,45 @@ export default function UpdateNewsletter() {
             </p>
 
             <p className="mt-1 text-xs leading-5 text-white/30">
-              Preview the newsletter, save it, then send it to
-              your active subscribers.
+              Send this newsletter to your active subscribers.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={
+              sending ||
+              loadingSubscriberCount ||
+              sent
+            }
+            className="
+              flex
+              w-full
+              items-center
+              justify-center
+              gap-2
+              rounded-xl
+              bg-white
+              px-5
+              py-3
+              text-sm
+              font-medium
+              text-black
+              transition
+              hover:bg-white/90
+              disabled:cursor-not-allowed
+              disabled:opacity-40
+            "
+          >
+            <Send size={16} />
 
-            {/* PREVIEW */}
-
-            <button
-              type="button"
-              onClick={() => setShowPreview(true)}
-              className="
-                flex
-                items-center
-                justify-center
-                gap-2
-                rounded-xl
-                border
-                border-white/10
-                px-5
-                py-3
-                text-sm
-                text-white/60
-                transition
-                hover:bg-white/5
-                hover:text-white
-              "
-            >
-              <Eye size={16} />
-              Preview
-            </button>
-
-            {/* SAVE */}
-
-            <button
-              type="button"
-              onClick={handleSave}
-              className="
-                flex
-                items-center
-                justify-center
-                gap-2
-                rounded-xl
-                border
-                border-white/10
-                bg-white/[0.05]
-                px-5
-                py-3
-                text-sm
-                font-medium
-                text-white
-                transition
-                hover:bg-white/10
-              "
-            >
-              <Save size={16} />
-
-              {saved
-                ? "Saved"
-                : "Save Newsletter"}
-            </button>
-
-            {/* SEND */}
-
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={
-                sending ||
-                loadingSubscriberCount ||
-                !saved
-              }
-              className="
-                flex
-                items-center
-                justify-center
-                gap-2
-                rounded-xl
-                bg-white
-                px-5
-                py-3
-                text-sm
-                font-medium
-                text-black
-                transition
-                hover:bg-white/90
-                disabled:cursor-not-allowed
-                disabled:opacity-40
-              "
-            >
-              <Send size={16} />
-
-              {loadingSubscriberCount
-                ? "Checking subscribers..."
-                : sent
-                  ? "Sent"
-                  : "Send Newsletter"}
-            </button>
-
-          </div>
+            {loadingSubscriberCount
+              ? "Checking subscribers..."
+              : sent
+                ? "Sent"
+                : "Send Newsletter"}
+          </button>
 
         </div>
       )}
@@ -639,9 +543,11 @@ export default function UpdateNewsletter() {
 
       {showSendConfirmation && (
         <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
+
           <div className="w-full overflow-hidden rounded-t-3xl border border-white/10 bg-[#111113] shadow-2xl sm:max-w-lg sm:rounded-3xl">
 
             <div className="border-b border-white/10 px-6 py-5">
+
               <div className="flex items-start justify-between gap-4">
 
                 <div>
@@ -650,7 +556,7 @@ export default function UpdateNewsletter() {
                   </p>
 
                   <h3 className="mt-2 text-xl font-medium text-white">
-                    Send this newsletter?
+                    You're about to send this newsletter
                   </h3>
                 </div>
 
@@ -665,46 +571,35 @@ export default function UpdateNewsletter() {
                 </button>
 
               </div>
+
             </div>
 
             <div className="space-y-5 px-6 py-6">
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
 
-                <p className="text-sm leading-6 text-white/60">
-                  You are about to send this newsletter to every
-                  currently active newsletter subscriber.
+                <p className="text-base leading-7 text-white/70">
+                  You're about to send this newsletter to
                 </p>
 
-                <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-5">
-
-                  <span className="text-sm text-white/40">
-                    Active subscribers
-                  </span>
-
-                  <span className="text-2xl font-semibold text-white">
-                    {activeSubscriberCount ?? 0}
-                  </span>
-
-                </div>
+                <p className="mt-2 text-2xl font-semibold text-white">
+                  {activeSubscriberCount ?? 0} active subscriber
+                  {(activeSubscriberCount ?? 0) === 1 ? "" : "s"}
+                </p>
 
               </div>
 
               <div className="rounded-xl border border-white/5 bg-white/[0.015] px-4 py-3">
+
                 <p className="text-xs text-white/30">
-                  Newsletter file
+                  Newsletter
                 </p>
 
                 <p className="mt-1 truncate text-sm text-white/60">
                   {fileName}
                 </p>
-              </div>
 
-              <p className="text-xs leading-5 text-white/30">
-                Please confirm that you want to email all active
-                subscribers. This action should only be confirmed
-                when the newsletter is ready to send.
-              </p>
+              </div>
 
             </div>
 
@@ -735,7 +630,10 @@ export default function UpdateNewsletter() {
               <button
                 type="button"
                 onClick={handleConfirmedSend}
-                disabled={sending || activeSubscriberCount === 0}
+                disabled={
+                  sending ||
+                  activeSubscriberCount === 0
+                }
                 className="
                   flex
                   items-center
@@ -755,10 +653,7 @@ export default function UpdateNewsletter() {
                 "
               >
                 <Send size={16} />
-
-                {sending
-                  ? "Sending..."
-                  : "Confirm & Send"}
+                Continue
               </button>
 
             </div>
@@ -767,42 +662,87 @@ export default function UpdateNewsletter() {
         </div>
       )}
 
-      {/* FULL PREVIEW */}
+      {/* SENDING / SENT */}
 
-      {showPreview && markdown && (
-        <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
+      {sending && (
+        <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md">
 
-          <div className="flex max-h-[95vh] w-full flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-[#111113] shadow-2xl sm:max-w-3xl sm:rounded-3xl">
+          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#111113] p-8 text-center shadow-2xl">
 
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
 
-              <div>
-                <p className="text-xs uppercase tracking-wider text-white/30">
-                  Newsletter Preview
-                </p>
-
-                <p className="mt-1 text-sm text-white/60">
-                  {fileName}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowPreview(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/50 transition hover:bg-white/10 hover:text-white"
-                aria-label="Close preview"
-              >
-                <X size={18} />
-              </button>
+              <Send
+                size={24}
+                className="animate-pulse text-white/70"
+              />
 
             </div>
 
-            <div
-              className="prose prose-invert max-w-none overflow-auto bg-white/[0.02] p-6 text-sm leading-7 sm:p-8"
-              dangerouslySetInnerHTML={{
-                __html: preview,
+            <h3 className="text-xl font-medium text-white">
+              Sending newsletter
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-white/40">
+              Your newsletter is being sent to your active subscribers.
+            </p>
+
+            <div className="mx-auto mt-6 h-1.5 w-32 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-1/2 animate-pulse rounded-full bg-white/50" />
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {sent && sendResult && (
+        <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/80 p-6 backdrop-blur-md">
+
+          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#111113] p-8 text-center shadow-2xl">
+
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.06]">
+
+              <div className="animate-[scale-in_0.35s_ease-out]">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </div>
+
+            </div>
+
+            <h3 className="text-2xl font-medium text-white">
+              Sent
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-white/40">
+              {sendResult.sent} of {sendResult.total} active subscribers received the newsletter.
+            </p>
+
+            {sendResult.failed > 0 && (
+              <p className="mt-2 text-xs leading-5 text-white/30">
+                {sendResult.failed} delivery attempt
+                {sendResult.failed === 1 ? "" : "s"} failed.
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSent(false);
+                setSendResult(null);
               }}
-            />
+              className="mt-6 rounded-xl border border-white/10 px-5 py-3 text-sm text-white/60 transition hover:bg-white/5 hover:text-white"
+            >
+              Done
+            </button>
 
           </div>
 

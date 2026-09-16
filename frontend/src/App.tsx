@@ -3,11 +3,12 @@ import { Routes, Route } from "react-router-dom";
 
 import PublicLayout from "./components/layout/PublicLayout";
 import ErrorBoundary from "./components/errors/ErrorBoundary";
+import { loadCheckout } from "./loaders/checkoutLoader";
 
 const Home = lazy(() => import("./pages/Home"));
 const Shop = lazy(() => import("./pages/Shop"));
 const Artist = lazy(() => import("./pages/Artist"));
-const Checkout = lazy(() => import("./pages/Checkout"));
+const Checkout = lazy(loadCheckout);
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));

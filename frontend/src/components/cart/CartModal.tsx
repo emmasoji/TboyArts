@@ -6,6 +6,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { loadCheckout } from "../../loaders/checkoutLoader";
 import { useCart } from "../../contexts/CartContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { formatPrice } from "../../data/artworkUtils";
@@ -22,11 +23,11 @@ export default function CartModal() {
   } = useCart();
 
   const light = theme === "light";
+  const navigate = useNavigate();
 
   if (!cartOpen) {
     return null;
   }
-const navigate = useNavigate();
   const subtotal = items.reduce(
     (total, item) => total + item.price * item.quantity,
     0,
@@ -309,9 +310,10 @@ const navigate = useNavigate();
                     : "bg-white text-neutral-950",
                 ].join(" ")}
                 onClick={() => {
-  closeCart();
-  navigate("/checkout");
-}}
+                  void loadCheckout();
+                  closeCart();
+                  navigate("/checkout");
+                }}
               >
                 Proceed to checkout
               </button>

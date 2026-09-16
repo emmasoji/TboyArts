@@ -4,6 +4,10 @@ from services.order_confirmation_email_service import (
     OrderConfirmationEmailError,
     send_order_confirmation_email,
 )
+from services.admin_order_email_service import (
+    AdminOrderEmailError,
+    send_paid_order_admin_email,
+)
 from utils.supabase import select, update
 
 
@@ -107,6 +111,24 @@ async def mark_order_paid_from_payment(
     except Exception as email_exc:
         print(
             "UNEXPECTED ORDER CONFIRMATION EMAIL ERROR:",
+            email_exc,
+        )
+
+    # Notify the admin when payment is successfully completed.
+    # This is independent of the customer confirmation email so
+    # an email failure cannot undo a successful payment.
+    try:
+        await send_paid_order_admin_email(
+            order_id=str(order["id"])
+        )
+    except AdminOrderEmailError as email_exc:
+        print(
+            "ADMIN PAID ORDER EMAIL ERROR:",
+            email_exc,
+        )
+    except Exception as email_exc:
+        print(
+            "UNEXPECTED ADMIN PAID ORDER EMAIL ERROR:",
             email_exc,
         )
 

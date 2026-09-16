@@ -1,4 +1,5 @@
 import html
+from datetime import datetime, timezone
 import os
 from typing import Any
 
@@ -108,7 +109,7 @@ async def _record_notification(
         {
             "order_id": order_id,
             "status": "sent",
-            "sent_at": "now()",
+            "sent_at": datetime.now(timezone.utc).isoformat(),
         },
     )
 
@@ -277,7 +278,7 @@ def _email_html(
           font-size:28px;
           font-weight:400;
         ">
-          Order completed
+          New paid order
         </h1>
 
         <p style="
@@ -287,7 +288,7 @@ def _email_html(
           line-height:1.6;
         ">
           Order <strong>{order_number}</strong>
-          has been marked as completed.
+          has been paid successfully.
         </p>
 
         <div style="
@@ -445,7 +446,7 @@ def _email_html(
 """
 
 
-async def send_completed_order_email(
+async def send_paid_order_admin_email(
     order_id: str,
 ) -> bool:
     _configure_resend()
@@ -453,11 +454,11 @@ async def send_completed_order_email(
     order = await _get_order(order_id)
 
     if (
-        str(order.get("status") or "").lower()
-        != "completed"
+        str(order.get("payment_status") or "").lower()
+        != "paid"
     ):
         raise AdminOrderEmailError(
-            "Order is not completed."
+            "Order payment is not completed."
         )
 
     if await _notification_exists(order_id):
@@ -480,8 +481,8 @@ async def send_completed_order_email(
             "from": ADMIN_ORDER_EMAIL_FROM,
             "to": [ADMIN_EMAIL],
             "subject": (
-                f"TboyArts order "
-                f"{order_number} has been completed"
+                f"TboyArts payment completed — "
+                f"order {order_number}"
             ),
             "html": _email_html(order, items),
         }
