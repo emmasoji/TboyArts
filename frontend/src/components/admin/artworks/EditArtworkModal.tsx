@@ -5,7 +5,10 @@ import ArtworkFormModal, {
 interface EditArtworkModalProps {
   artwork: Partial<ArtworkFormData>;
   onClose: () => void;
-  onSubmit: (data: ArtworkFormData) => void;
+  onSubmit: (
+    data: ArtworkFormData,
+    imageFile: File | null,
+  ) => void | Promise<void>;
 }
 
 export default function EditArtworkModal({

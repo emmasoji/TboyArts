@@ -33,6 +33,7 @@ interface ArtworkFormModalProps {
   onClose: () => void;
   onSubmit: (
     data: ArtworkFormData,
+    imageFile: File | null,
   ) => void | Promise<void>;
 }
 
@@ -83,6 +84,9 @@ export default function ArtworkFormModal({
 
   const [isDragging, setIsDragging] =
     useState(false);
+
+  const [imageFile, setImageFile] =
+    useState<File | null>(null);
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
@@ -182,6 +186,7 @@ export default function ArtworkFormModal({
     const preview =
       URL.createObjectURL(file);
 
+    setImageFile(file);
     updateField("image", preview);
   };
 
@@ -224,7 +229,10 @@ export default function ArtworkFormModal({
     setIsSubmitting(true);
 
     try {
-      await onSubmit(form);
+      await onSubmit(
+        form,
+        imageFile,
+      );
     } catch (error) {
       console.error(
         "Failed to save artwork:",

@@ -29,6 +29,7 @@ import DeleteArtworkModal from "./DeleteArtworkModal";
 import ErrorState from "../../../errors/ErrorState";
 
 import { createPortal } from "react-dom";
+import { supabase } from "../../../../lib/supabase";
 
 import type {
   ArtworkFormData,
@@ -160,14 +161,67 @@ export default function ArtworkTable() {
     );
 
   /*
+   * UPLOAD ARTWORK IMAGE
+   */
+
+  async function uploadArtworkImage(
+    imageFile: File,
+  ): Promise<string> {
+    const extension =
+      imageFile.name
+        .split(".")
+        .pop()
+        ?.toLowerCase() || "jpg";
+
+    const filePath =
+      `artwork-${crypto.randomUUID()}.${extension}`;
+
+    const {
+      error: uploadError,
+    } = await supabase.storage
+      .from("artworks")
+      .upload(
+        filePath,
+        imageFile,
+        {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: imageFile.type,
+        },
+      );
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } =
+      supabase.storage
+        .from("artworks")
+        .getPublicUrl(filePath);
+
+    if (!data.publicUrl) {
+      throw new Error(
+        "Artwork image was uploaded, but its public URL could not be created.",
+      );
+    }
+
+    return data.publicUrl;
+  }
+
+  /*
    * ADD ARTWORK
    */
 
   async function handleAdd(
     data: ArtworkFormData,
+    imageFile: File | null,
   ) {
     try {
       setError(null);
+
+      const imageUrl = imageFile
+        ? await uploadArtworkImage(imageFile)
+        : data.image || null;
 
       await createArtwork({
         title: data.title.trim(),
@@ -193,7 +247,7 @@ export default function ArtworkTable() {
           data.description || null,
 
         image:
-          data.image || null,
+          imageUrl,
 
         featured:
           Boolean(data.featured),
@@ -221,6 +275,7 @@ export default function ArtworkTable() {
 
   async function handleEdit(
     data: ArtworkFormData,
+    imageFile: File | null,
   ) {
     if (!editingArtwork) {
       return;
@@ -228,6 +283,10 @@ export default function ArtworkTable() {
 
     try {
       setError(null);
+
+      const imageUrl = imageFile
+        ? await uploadArtworkImage(imageFile)
+        : editingArtwork.image;
 
       await updateArtwork(
         editingArtwork.id,
@@ -256,7 +315,7 @@ export default function ArtworkTable() {
             data.description || null,
 
           image:
-            data.image || null,
+            imageUrl || null,
 
           featured:
             Boolean(data.featured),

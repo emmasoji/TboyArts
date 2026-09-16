@@ -1,6 +1,7 @@
 import API_URL from "../../../../config/api";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   FileText,
   Upload,
@@ -12,6 +13,7 @@ import {
 
 import { getActiveNewsletterSubscriberCount } from "../../../../services/newsletterService";
 import { supabase } from "../../../../lib/supabase";
+import { useAdminTheme } from "../../../../contexts/AdminThemeContext";
 
 interface NewsletterImage {
   src: string;
@@ -19,6 +21,8 @@ interface NewsletterImage {
 }
 
 export default function UpdateNewsletter() {
+  const { theme } = useAdminTheme();
+
   const [fileName, setFileName] = useState("");
   const [markdown, setMarkdown] = useState("");
   const [preview, setPreview] = useState("");
@@ -55,6 +59,20 @@ export default function UpdateNewsletter() {
     setPreview(markdownToHtml(markdown));
     setImages(extractImages(markdown));
   }, [markdown]);
+
+  useEffect(() => {
+    if (!showSendConfirmation) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showSendConfirmation]);
 
   async function handleFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -541,126 +559,77 @@ export default function UpdateNewsletter() {
 
       {/* SEND CONFIRMATION */}
 
-      {showSendConfirmation && (
-        <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
+      {showSendConfirmation &&
+        createPortal(
+          <div className={[
+            "fixed inset-0 z-[160] flex items-center justify-center overflow-hidden p-6 backdrop-blur-md",
+            theme === "light" ? "bg-black/20" : "bg-[#111113]/90",
+          ].join(" ")}>
 
-          <div className="w-full overflow-hidden rounded-t-3xl border border-white/10 bg-[#111113] shadow-2xl sm:max-w-lg sm:rounded-3xl">
+            <div className={[
+              "w-full max-w-md rounded-2xl border p-6 shadow-2xl sm:p-8",
+              theme === "light"
+                ? "border-black/10 bg-white"
+                : "border-white/10 bg-[#111113]",
+            ].join(" ")}>
 
-            <div className="border-b border-white/10 px-6 py-5">
+              <p className={[
+                "text-base leading-7",
+                theme === "light"
+                  ? "text-neutral-950"
+                  : "text-white/70",
+              ].join(" ")}>
+                You're about to send this newsletter to{" "}
+                <span className={[
+                  "font-extrabold",
+                  theme === "light"
+                    ? "text-neutral-950"
+                    : "text-white/70",
+                ].join(" ")}>
+                  {activeSubscriberCount ?? 0} active subscriber
+                  {(activeSubscriberCount ?? 0) === 1 ? "" : "s"}
+                </span>.
+              </p>
 
-              <div className="flex items-start justify-between gap-4">
-
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/30">
-                    Confirm Send
-                  </p>
-
-                  <h3 className="mt-2 text-xl font-medium text-white">
-                    You're about to send this newsletter
-                  </h3>
-                </div>
+              <div className="mt-6 flex justify-end gap-3">
 
                 <button
                   type="button"
                   onClick={() => setShowSendConfirmation(false)}
                   disabled={sending}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-white/40 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Close confirmation"
+                  className={[
+                    "rounded-xl border px-5 py-3 text-sm transition disabled:cursor-not-allowed disabled:opacity-40",
+                    theme === "light"
+                      ? "border-black/10 text-neutral-950 hover:bg-black/5"
+                      : "border-white/10 text-white/60 hover:bg-white/5 hover:text-white",
+                  ].join(" ")}
                 >
-                  <X size={18} />
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmedSend}
+                  disabled={
+                    sending ||
+                    activeSubscriberCount === 0
+                  }
+                  className={[
+                    "rounded-xl px-5 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40",
+                    theme === "light"
+                      ? "bg-neutral-950 text-white hover:bg-neutral-800"
+                      : "bg-white text-black hover:bg-white/90",
+                  ].join(" ")}
+                >
+                  Continue
                 </button>
 
               </div>
 
             </div>
-
-            <div className="space-y-5 px-6 py-6">
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
-
-                <p className="text-base leading-7 text-white/70">
-                  You're about to send this newsletter to
-                </p>
-
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {activeSubscriberCount ?? 0} active subscriber
-                  {(activeSubscriberCount ?? 0) === 1 ? "" : "s"}
-                </p>
-
-              </div>
-
-              <div className="rounded-xl border border-white/5 bg-white/[0.015] px-4 py-3">
-
-                <p className="text-xs text-white/30">
-                  Newsletter
-                </p>
-
-                <p className="mt-1 truncate text-sm text-white/60">
-                  {fileName}
-                </p>
-
-              </div>
-
-            </div>
-
-            <div className="flex flex-col-reverse gap-3 border-t border-white/10 px-6 py-5 sm:flex-row sm:justify-end">
-
-              <button
-                type="button"
-                onClick={() => setShowSendConfirmation(false)}
-                disabled={sending}
-                className="
-                  rounded-xl
-                  border
-                  border-white/10
-                  px-5
-                  py-3
-                  text-sm
-                  text-white/60
-                  transition
-                  hover:bg-white/5
-                  hover:text-white
-                  disabled:cursor-not-allowed
-                  disabled:opacity-40
-                "
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleConfirmedSend}
-                disabled={
-                  sending ||
-                  activeSubscriberCount === 0
-                }
-                className="
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-xl
-                  bg-white
-                  px-5
-                  py-3
-                  text-sm
-                  font-medium
-                  text-black
-                  transition
-                  hover:bg-white/90
-                  disabled:cursor-not-allowed
-                  disabled:opacity-40
-                "
-              >
-                <Send size={16} />
-                Continue
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
 
       {/* SENDING / SENT */}
 

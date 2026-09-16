@@ -135,7 +135,7 @@ export default function AdminLayout() {
 
         <div
           className={[
-            "min-h-0 min-w-0 w-full max-w-full flex-1 overflow-y-auto overflow-x-hidden px-5 py-6 sm:px-8 sm:py-8",
+            "relative min-h-0 min-w-0 w-full max-w-full flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 py-6 sm:px-8 sm:py-8",
             "transition-colors duration-300",
             isLight
               ? "text-neutral-950"
