@@ -18,6 +18,7 @@ app.add_middleware(
     allow_origins=[
         "https://tboyarts.netlify.app",
         "https://tboyarts.shop",
+        "https://www.tboyarts.shop",
     ],
     allow_credentials=True,
     allow_methods=["*"],
