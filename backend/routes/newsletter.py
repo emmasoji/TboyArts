@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from models.newsletter import (
     NewsletterSendRequest,
@@ -10,6 +10,7 @@ from services.newsletter_service import (
     send_newsletter,
     subscribe_and_send_welcome,
 )
+from utils.rate_limit import limiter
 from utils.supabase import select, update
 
 
@@ -67,12 +68,14 @@ async def unsubscribe_newsletter_endpoint(token: str):
 
 
 @router.post("/subscribe")
+@limiter.limit("3/minute")
 async def subscribe_newsletter_endpoint(
-    request: NewsletterSubscribeRequest,
+    request: Request,
+    newsletter_request: NewsletterSubscribeRequest,
 ):
     try:
         result = await subscribe_and_send_welcome(
-            request.email
+            newsletter_request.email
         )
 
         return {

@@ -17,6 +17,7 @@ from services.paystack_service import (
 from services.payment_service import (
     mark_order_paid_from_payment,
 )
+from utils.rate_limit import limiter
 from utils.supabase import select, update
 
 import os
@@ -36,8 +37,10 @@ router = APIRouter(
 
 
 @router.post("/initialize")
+@limiter.limit("5/minute")
 async def initialize_payment(
-    request: InitializePaymentRequest,
+    request: Request,
+    payment_request: InitializePaymentRequest,
 ):
     try:
         orders = await select(
@@ -46,7 +49,7 @@ async def initialize_payment(
                 "id,order_number,email,total,"
                 "payment_status,payment_reference"
             ),
-            filters={"id": request.order_id},
+            filters={"id": payment_request.order_id},
         )
 
         if not orders:
@@ -157,7 +160,7 @@ async def initialize_payment(
         }
 
         selected_method = (
-            request.payment_method
+            payment_request.payment_method
             .lower()
             .strip()
         )
@@ -181,7 +184,7 @@ async def initialize_payment(
 
         await update(
             "orders",
-            {"id": request.order_id},
+            {"id": payment_request.order_id},
             {
                 "payment_reference": reference,
                 "payment_method": selected_method,
@@ -190,7 +193,7 @@ async def initialize_payment(
 
         return {
             "success": True,
-            "order_id": request.order_id,
+            "order_id": payment_request.order_id,
             "order_number": order["order_number"],
             "reference": reference,
             "authorization_url": payment.get(

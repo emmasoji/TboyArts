@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
+from utils.rate_limit import limiter
 from services.tracking_service import track_order
 
 router = APIRouter(
@@ -9,7 +10,9 @@ router = APIRouter(
 
 
 @router.get("/order")
+@limiter.limit("20/minute")
 async def track_order_endpoint(
+    request: Request,
     order_number: str | None = Query(default=None),
     email: str | None = Query(default=None),
 ):

@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from routes.orders import router as orders_router
+from utils.rate_limit import limiter
 from routes.payments import router as payments_router
 from routes.storage import router as storage_router
 from routes.tracking import router as tracking_router
@@ -12,6 +15,12 @@ app = FastAPI(
     title="TboyArts API",
     description="Backend API for the TboyArts art e-commerce platform",
     version="1.0.0",
+)
+
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
 )
 
 app.add_middleware(

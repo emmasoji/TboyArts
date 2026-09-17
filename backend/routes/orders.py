@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from models.order import CreateOrderRequest, OrderResponse
 from services.order_service import (
@@ -6,14 +6,16 @@ from services.order_service import (
     get_checkout_order,
     cancel_pending_order,
 )
+from utils.rate_limit import limiter
 
 router = APIRouter(prefix="/api/orders", tags=["Orders"])
 
 
 @router.post("")
-async def create_order_endpoint(request: CreateOrderRequest):
+@limiter.limit("5/minute")
+async def create_order_endpoint(request: Request, order_request: CreateOrderRequest):
     try:
-        return await create_order(request)
+        return await create_order(order_request)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
