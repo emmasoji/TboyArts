@@ -11,6 +11,7 @@ import {
   type AboutSettings,
 } from "../../../../services/homepageService";
 import { supabase } from "../../../../lib/supabase";
+import API_URL from "../../../../config/api";
 import ErrorState from "../../../errors/ErrorState";
 
 export default function AboutManagement() {
@@ -91,6 +92,52 @@ export default function AboutManagement() {
         );
       }
 
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      const accessToken =
+        sessionData.session?.access_token;
+
+      if (sessionError || !accessToken) {
+        throw new Error(
+          "Authentication required before uploading the about image.",
+        );
+      }
+
+      const storageResponse = await fetch(
+        `${API_URL}/api/admin/storage/usage`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!storageResponse.ok) {
+        throw new Error(
+          "Unable to verify available storage. Upload cancelled.",
+        );
+      }
+
+      const storageData = await storageResponse.json();
+
+      if (!storageData.success) {
+        throw new Error(
+          storageData.message ||
+            "Unable to verify available storage. Upload cancelled.",
+        );
+      }
+
+      if (
+        storageData.usedBytes >= storageData.limitBytes ||
+        storageData.usedBytes + file.size >
+          storageData.limitBytes
+      ) {
+        throw new Error(
+          "Storage limit reached. This about image cannot be uploaded.",
+        );
+      }
+
       const extension =
         file.name.split(".").pop()?.toLowerCase() ||
         "jpg";
@@ -161,6 +208,8 @@ export default function AboutManagement() {
       setMessage("");
       setError("");
 
+      const oldImageUrl = settings.aboutImage;
+
       await updateAboutSettings(
         settings.id,
         {
@@ -183,6 +232,59 @@ export default function AboutManagement() {
             settings.aboutButtonUrl,
         },
       );
+
+      if (
+        oldImageUrl &&
+        settings.aboutImage &&
+        oldImageUrl !== settings.aboutImage
+      ) {
+        try {
+          const marker =
+            "/storage/v1/object/public/";
+
+          const markerIndex =
+            oldImageUrl.indexOf(marker);
+
+          if (markerIndex !== -1) {
+            const storagePath =
+              decodeURIComponent(
+                oldImageUrl.slice(
+                  markerIndex + marker.length,
+                ),
+              );
+
+            const bucketMarker =
+              storagePath.indexOf("/");
+
+            if (bucketMarker !== -1) {
+              const bucket =
+                storagePath.slice(0, bucketMarker);
+
+              const oldFilePath =
+                storagePath.slice(bucketMarker + 1);
+
+              if (bucket && oldFilePath) {
+                const { error: storageError } =
+                  await supabase.storage
+                    .from(bucket)
+                    .remove([oldFilePath]);
+
+                if (storageError) {
+                  console.error(
+                    "About image replacement cleanup failed:",
+                    storageError,
+                  );
+                }
+              }
+            }
+          }
+        } catch (storageError) {
+          console.error(
+            "About image replacement cleanup failed:",
+            storageError,
+          );
+        }
+      }
 
       setMessage(
         "About settings saved successfully.",

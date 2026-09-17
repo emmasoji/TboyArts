@@ -30,6 +30,7 @@ import ErrorState from "../../../errors/ErrorState";
 
 import { createPortal } from "react-dom";
 import { supabase } from "../../../../lib/supabase";
+import API_URL from "../../../../config/api";
 
 import type {
   ArtworkFormData,
@@ -167,6 +168,52 @@ export default function ArtworkTable() {
   async function uploadArtworkImage(
     imageFile: File,
   ): Promise<string> {
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.getSession();
+
+    const accessToken =
+      sessionData.session?.access_token;
+
+    if (sessionError || !accessToken) {
+      throw new Error(
+        "Authentication required before uploading an artwork image.",
+      );
+    }
+
+    const storageResponse = await fetch(
+      `${API_URL}/api/admin/storage/usage`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!storageResponse.ok) {
+      throw new Error(
+        "Unable to verify available storage. Upload cancelled.",
+      );
+    }
+
+    const storageData = await storageResponse.json();
+
+    if (!storageData.success) {
+      throw new Error(
+        storageData.message ||
+          "Unable to verify available storage. Upload cancelled.",
+      );
+    }
+
+    if (
+      storageData.usedBytes >= storageData.limitBytes ||
+      storageData.usedBytes + imageFile.size >
+        storageData.limitBytes
+    ) {
+      throw new Error(
+        "Storage limit reached. This artwork image cannot be uploaded.",
+      );
+    }
+
     const extension =
       imageFile.name
         .split(".")
@@ -333,6 +380,47 @@ export default function ArtworkTable() {
             "available",
         },
       );
+
+      if (
+        imageFile &&
+        editingArtwork.image &&
+        imageUrl !== editingArtwork.image
+      ) {
+        try {
+          const marker =
+            "/storage/v1/object/public/artworks/";
+          const markerIndex =
+            editingArtwork.image.indexOf(marker);
+
+          if (markerIndex !== -1) {
+            const oldFilePath =
+              decodeURIComponent(
+                editingArtwork.image.slice(
+                  markerIndex + marker.length,
+                ),
+              );
+
+            if (oldFilePath) {
+              const { error: storageError } =
+                await supabase.storage
+                  .from("artworks")
+                  .remove([oldFilePath]);
+
+              if (storageError) {
+                console.error(
+                  "Artwork image replacement cleanup failed:",
+                  storageError,
+                );
+              }
+            }
+          }
+        } catch (storageError) {
+          console.error(
+            "Artwork image replacement cleanup failed:",
+            storageError,
+          );
+        }
+      }
 
       setEditingArtwork(null);
 

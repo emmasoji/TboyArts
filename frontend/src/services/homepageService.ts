@@ -105,64 +105,6 @@ export async function updateHeroSettings(
   };
 }
 
-/**
- * Upload a homepage hero image to Supabase Storage.
- *
- * Bucket:
- * homepage
- *
- * Returns the public URL of the uploaded image.
- */
-export async function uploadHeroImage(
-  file: File,
-): Promise<string> {
-  if (!file) {
-    throw new Error("No image selected.");
-  }
-
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Please select an image file.");
-  }
-
-  const extension =
-    file.name.split(".").pop()?.toLowerCase() || "jpg";
-
-  const fileName = `hero-${Date.now()}.${extension}`;
-
-  const filePath = `hero/${fileName}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("homepage")
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error(
-      "UPLOAD HERO IMAGE ERROR:",
-      uploadError,
-    );
-
-    throw new Error(
-      uploadError.message ||
-        "Failed to upload hero image.",
-    );
-  }
-
-  const { data } = supabase.storage
-    .from("homepage")
-    .getPublicUrl(filePath);
-
-  if (!data.publicUrl) {
-    throw new Error(
-      "Failed to generate hero image URL.",
-    );
-  }
-
-  return data.publicUrl;
-}
-
 export interface AboutSettings {
   id: string;
   aboutLabel: string;

@@ -1,4 +1,5 @@
 import API_URL from "../../../config/api";
+import { supabase } from "../../../lib/supabase";
 
 import { useEffect, useState } from "react";
 import { HardDrive } from "lucide-react";
@@ -38,8 +39,23 @@ export default function Storage() {
     try {
       setError(null);
 
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      const accessToken =
+        sessionData.session?.access_token;
+
+      if (sessionError || !accessToken) {
+        throw new Error("Authentication required.");
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/api/admin/storage/usage`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
       );
 
       if (!response.ok) {

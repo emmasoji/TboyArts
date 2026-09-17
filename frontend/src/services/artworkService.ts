@@ -74,6 +74,39 @@ export async function updateArtwork(
   return data as Artwork;
 }
 
+async function deleteArtworkImage(imageUrl: string | null): Promise<void> {
+  if (!imageUrl) {
+    return;
+  }
+
+  const marker = "/storage/v1/object/public/artworks/";
+  const markerIndex = imageUrl.indexOf(marker);
+
+  if (markerIndex === -1) {
+    console.warn(
+      "Unable to determine artwork Storage path from image URL:",
+      imageUrl,
+    );
+    return;
+  }
+
+  const filePath = decodeURIComponent(
+    imageUrl.slice(markerIndex + marker.length),
+  );
+
+  if (!filePath) {
+    return;
+  }
+
+  const { error } = await supabase.storage
+    .from("artworks")
+    .remove([filePath]);
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function deleteArtwork(
   id: string,
 ): Promise<void> {
@@ -113,6 +146,24 @@ export async function deleteArtwork(
     );
   }
 
+  const { data: artwork, error: artworkFetchError } =
+    await supabase
+      .from("artworks")
+      .select("image")
+      .eq("id", id)
+      .single();
+
+  if (artworkFetchError) {
+    console.error(
+      "Supabase artwork image lookup error:",
+      artworkFetchError,
+    );
+
+    throw new Error(
+      "Unable to retrieve the artwork image before deletion.",
+    );
+  }
+
   const { error } = await supabase
     .from("artworks")
     .delete()
@@ -126,6 +177,15 @@ export async function deleteArtwork(
 
     throw new Error(
       error.message || "Failed to delete artwork.",
+    );
+  }
+
+  try {
+    await deleteArtworkImage(artwork?.image ?? null);
+  } catch (storageError) {
+    console.error(
+      "Artwork database row deleted, but Storage image cleanup failed:",
+      storageError,
     );
   }
 }

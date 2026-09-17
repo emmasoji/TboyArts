@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
+import API_URL from "../../../config/api";
 import ErrorState from "../../errors/ErrorState";
 
 import {
@@ -188,6 +189,52 @@ export default function ArtistManagement() {
       return profile.profile_image;
     }
 
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.getSession();
+
+    const accessToken =
+      sessionData.session?.access_token;
+
+    if (sessionError || !accessToken) {
+      throw new Error(
+        "Authentication required before uploading the artist image.",
+      );
+    }
+
+    const storageResponse = await fetch(
+      `${API_URL}/api/admin/storage/usage`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!storageResponse.ok) {
+      throw new Error(
+        "Unable to verify available storage. Upload cancelled.",
+      );
+    }
+
+    const storageData = await storageResponse.json();
+
+    if (!storageData.success) {
+      throw new Error(
+        storageData.message ||
+          "Unable to verify available storage. Upload cancelled.",
+      );
+    }
+
+    if (
+      storageData.usedBytes >= storageData.limitBytes ||
+      storageData.usedBytes + imageFile.size >
+        storageData.limitBytes
+    ) {
+      throw new Error(
+        "Storage limit reached. This artist image cannot be uploaded.",
+      );
+    }
+
     const extension =
       imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
 
@@ -282,6 +329,8 @@ export default function ArtistManagement() {
         finalImage = await uploadImage();
       }
 
+      const oldImageUrl = profile.profile_image;
+
       const saved = await updateArtistProfile({
         name: profile.name,
         tagline: profile.tagline,
@@ -289,6 +338,59 @@ export default function ArtistManagement() {
         story: profile.story,
         profile_image: finalImage,
       });
+
+      if (
+        imageFile &&
+        oldImageUrl &&
+        finalImage &&
+        finalImage !== oldImageUrl
+      ) {
+        try {
+          const marker =
+            "/storage/v1/object/public/";
+
+          const markerIndex =
+            oldImageUrl.indexOf(marker);
+
+          if (markerIndex !== -1) {
+            const storagePath =
+              decodeURIComponent(
+                oldImageUrl.slice(
+                  markerIndex + marker.length,
+                ),
+              );
+
+            const bucketMarker = storagePath.indexOf("/");
+
+            if (bucketMarker !== -1) {
+              const bucket =
+                storagePath.slice(0, bucketMarker);
+
+              const oldFilePath =
+                storagePath.slice(bucketMarker + 1);
+
+              if (bucket && oldFilePath) {
+                const { error: storageError } =
+                  await supabase.storage
+                    .from(bucket)
+                    .remove([oldFilePath]);
+
+                if (storageError) {
+                  console.error(
+                    "Artist image replacement cleanup failed:",
+                    storageError,
+                  );
+                }
+              }
+            }
+          }
+        } catch (storageError) {
+          console.error(
+            "Artist image replacement cleanup failed:",
+            storageError,
+          );
+        }
+      }
 
       setProfile(saved);
       clearSelectedImage();

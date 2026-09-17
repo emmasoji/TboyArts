@@ -10,6 +10,7 @@ from routes.storage import router as storage_router
 from routes.tracking import router as tracking_router
 from routes.newsletter import router as newsletter_router
 from routes.admin_orders import router as admin_orders_router
+from routes.currency import router as currency_router
 
 app = FastAPI(
     title="TboyArts API",
@@ -26,7 +27,7 @@ app.add_exception_handler(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://tboyarts.netlify.app",
+                "https://tboyarts.netlify.app",
         "https://tboyarts.shop",
         "https://www.tboyarts.shop",
     ],
@@ -41,6 +42,7 @@ app.include_router(storage_router)
 app.include_router(tracking_router)
 app.include_router(newsletter_router)
 app.include_router(admin_orders_router)
+app.include_router(currency_router)
 
 
 @app.get("/api/health")

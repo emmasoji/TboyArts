@@ -39,11 +39,16 @@ def _configure_resend() -> None:
     resend.api_key = RESEND_API_KEY
 
 
-def _money(value: Any) -> str:
+def _money(value: Any, currency: str = "NGN") -> str:
     try:
         amount = float(value or 0)
     except (TypeError, ValueError):
         amount = 0
+
+    currency = str(currency or "NGN").upper()
+
+    if currency == "USD":
+        return f"${amount:,.2f}"
 
     return f"₦{amount:,.0f}"
 
@@ -81,6 +86,7 @@ async def _get_order(order_id: str) -> dict[str, Any]:
             "shipping,"
             "tax,"
             "total,"
+            "currency,"
             "payment_status,"
             "status,"
             "created_at,"
@@ -105,7 +111,7 @@ async def _get_order_items(order_id: str) -> list[dict[str, Any]]:
     )
 
 
-def _order_items_html(items: list[dict[str, Any]]) -> str:
+def _order_items_html(items: list[dict[str, Any]], currency: str = "NGN") -> str:
     cards: list[str] = []
 
     for item in items:
@@ -115,7 +121,7 @@ def _order_items_html(items: list[dict[str, Any]]) -> str:
 
         quantity = int(item.get("quantity") or 1)
 
-        price = _money(item.get("price"))
+        price = _money(item.get("price"), currency)
 
         image_url = _safe_image_url(item.get("image"))
 
@@ -295,7 +301,8 @@ def _email_html(
         quote=True,
     )
 
-    items_html = _order_items_html(items)
+    currency = str(order.get("currency") or "NGN").upper()
+    items_html = _order_items_html(items, currency)
 
     shipping_lines = []
 
@@ -605,22 +612,22 @@ def _email_html(
 
                 {_summary_row(
                     "Subtotal",
-                    _money(order.get("subtotal")),
+                    _money(order.get("subtotal"), currency),
                 )}
 
                 {_summary_row(
                     "Shipping",
-                    _money(order.get("shipping")),
+                    _money(order.get("shipping"), currency),
                 )}
 
                 {_summary_row(
                     "Tax",
-                    _money(order.get("tax")),
+                    _money(order.get("tax"), currency),
                 )}
 
                 {_summary_row(
                     "Total",
-                    _money(order.get("total")),
+                    _money(order.get("total"), currency),
                     total=True,
                 )}
 

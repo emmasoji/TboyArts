@@ -25,6 +25,15 @@ async def mark_order_paid_from_payment(
     - cancellation/payment-race protection
     """
 
+    payment_reference = str(
+        payment.get("reference") or ""
+    ).strip()
+
+    if payment_reference != reference:
+        raise ValueError(
+            "Payment reference does not match the requested reference."
+        )
+
     payment_status = str(
         payment.get("status") or ""
     ).lower()
@@ -94,6 +103,7 @@ async def mark_order_paid_from_payment(
             "status": "processing",
             "payment_method": "paystack",
             "payment_reference": reference,
+            "currency": payment_currency,
         },
     )
 

@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import ErrorBoundary from "./components/errors/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { TrackOrderProvider } from "./contexts/TrackOrderContext";
 import "./index.css";
 import "./styles/tracking.css";
@@ -15,11 +16,13 @@ ReactDOM.createRoot(
   <React.StrictMode>
     <BrowserRouter>
       <ThemeProvider>
+        <CurrencyProvider>
         <TrackOrderProvider>
           <ErrorBoundary>
             <App />
           </ErrorBoundary>
         </TrackOrderProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>

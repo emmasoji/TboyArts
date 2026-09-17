@@ -237,7 +237,11 @@ async def initialize_payment(
     "/verify/{reference}",
     response_model=VerifyPaymentResponse,
 )
-async def verify_payment(reference: str):
+@limiter.limit("10/minute")
+async def verify_payment(
+    request: Request,
+    reference: str,
+):
     try:
         payment = await verify_transaction(
             reference

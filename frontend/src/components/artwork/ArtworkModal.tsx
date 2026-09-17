@@ -6,11 +6,9 @@ import {
 } from "lucide-react";
 
 import type { Artwork } from "../../types/artwork";
-import {
-  formatPrice,
-  isPurchasable,
-} from "../../data/artworkUtils";
+import { isPurchasable } from "../../data/artworkUtils";
 import { useCart } from "../../contexts/CartContext";
+import { useCurrency } from "../../contexts/CurrencyContext";
 import AddToCartAnimation from "../cart/AddToCartAnimation";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -52,6 +50,7 @@ export default function ArtworkModal({
 }: ArtworkModalProps) {
   const { theme } = useTheme();
   const { itemCount, openCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   const light = theme === "light";
 

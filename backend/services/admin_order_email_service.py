@@ -45,13 +45,18 @@ def _configure_resend() -> None:
     resend.api_key = RESEND_API_KEY
 
 
-def _money(value: Any) -> str:
+def _money(value: Any, currency: str = "NGN") -> str:
     try:
         amount = float(value or 0)
     except (TypeError, ValueError):
         amount = 0
 
-    return f"₦{amount:,.2f}"
+    currency = str(currency or "NGN").upper()
+
+    if currency == "USD":
+        return f"${amount:,.2f}"
+
+    return f"₦{amount:,.0f}"
 
 
 async def _get_order(order_id: str) -> dict[str, Any]:
@@ -64,6 +69,7 @@ async def _get_order(order_id: str) -> dict[str, Any]:
             "email,"
             "phone,"
             "total,"
+            "currency,"
             "payment_status,"
             "status,"
             "created_at"
@@ -156,7 +162,8 @@ def _email_html(
         str(order.get("created_at") or "—")
     )
 
-    total = _money(order.get("total"))
+    currency = str(order.get("currency") or "NGN").upper()
+    total = _money(order.get("total"), currency)
 
     rows = ""
 
@@ -169,11 +176,12 @@ def _email_html(
             item.get("quantity") or 1
         )
 
-        price = _money(item.get("price"))
+        price = _money(item.get("price"), currency)
 
         subtotal = _money(
             float(item.get("price") or 0)
-            * quantity
+            * quantity,
+            currency,
         )
 
         rows += f"""

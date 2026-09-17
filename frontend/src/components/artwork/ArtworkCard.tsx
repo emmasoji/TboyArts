@@ -1,9 +1,7 @@
 import { ArrowUpRight, ShoppingBag } from "lucide-react";
 import type { Artwork } from "../../types/artwork";
-import {
-  formatPrice,
-  isPurchasable,
-} from "../../data/artworkUtils";
+import { useCurrency } from "../../contexts/CurrencyContext";
+import { isPurchasable } from "../../data/artworkUtils";
 
 interface ArtworkCardProps {
   artwork: Artwork;
@@ -20,6 +18,7 @@ export default function ArtworkCard({
   onSelect,
   onImageSelect,
 }: ArtworkCardProps) {
+  const { formatPrice } = useCurrency();
   const purchasable = isPurchasable(artwork);
 
   return (

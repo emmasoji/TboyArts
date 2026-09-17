@@ -7,6 +7,7 @@ import {
 import { Link } from "react-router-dom";
 
 import Skeleton from "../ui/Skeleton";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 import {
   getArtworks,
@@ -30,6 +31,7 @@ export default function FeaturedArtwork({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     let mounted = true;
@@ -399,9 +401,9 @@ export default function FeaturedArtwork({
                           <div className="featured-carousel-bottom">
 
                             <strong>
-                              {formatPrice(
-                                artwork.price,
-                              )}
+                              {artwork.price === null
+                            ? "Price unavailable"
+                            : formatPrice(artwork.price)}
                             </strong>
 
                             <button
@@ -496,19 +498,3 @@ export default function FeaturedArtwork({
   );
 }
 
-function formatPrice(
-  price: number | null,
-): string {
-  if (price === null) {
-    return "Price unavailable";
-  }
-
-  return new Intl.NumberFormat(
-    "en-NG",
-    {
-      style: "currency",
-      currency: "NGN",
-      maximumFractionDigits: 0,
-    },
-  ).format(price);
-}

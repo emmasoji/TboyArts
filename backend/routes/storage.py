@@ -31,7 +31,9 @@ router = APIRouter(
 # ============================================================
 
 @router.get("/usage")
-async def storage_usage():
+async def storage_usage(
+    _user: dict = Depends(require_authenticated_admin),
+):
     try:
         data = get_storage_usage()
 

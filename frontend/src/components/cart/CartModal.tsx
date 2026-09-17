@@ -8,11 +8,13 @@ import {
 import { useNavigate } from "react-router-dom";
 import { loadCheckout } from "../../loaders/checkoutLoader";
 import { useCart } from "../../contexts/CartContext";
+import { useCurrency } from "../../contexts/CurrencyContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { formatPrice } from "../../data/artworkUtils";
+
 
 export default function CartModal() {
   const { theme } = useTheme();
+  const { formatPrice } = useCurrency();
   const {
     items,
     cartOpen,

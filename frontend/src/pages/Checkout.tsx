@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 
 import { useCart } from "../contexts/CartContext";
+import { useCurrency } from "../contexts/CurrencyContext";
 import {
   createOrder,
   initializePayment,
@@ -55,17 +56,12 @@ const PENDING_ORDER_STORAGE_KEY = "tboyarts-pending-checkout-order";
 
 
 
-function formatPrice(amount: number) {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, clearCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   const [step, setStep] = useState<CheckoutStep>("details");
 

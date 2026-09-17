@@ -18,6 +18,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useTrackOrder } from "../../contexts/TrackOrderContext";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 type SearchMode = "order-number" | "email";
 
@@ -44,9 +45,7 @@ type TrackingOrder = {
 const API_BASE_URL =
   API_URL;
 
-function formatCurrency(value: number | null) {
-  return `₦${Number(value ?? 0).toLocaleString("en-NG")}`;
-}
+
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -148,6 +147,7 @@ function getTimeline(status: string) {
 }
 
 export default function TrackOrderModal() {
+  const { formatPrice } = useCurrency();
   const {
     isTrackOrderOpen,
     closeTrackOrder,
@@ -710,9 +710,9 @@ export default function TrackOrderModal() {
                       <span>Order total</span>
 
                       <strong>
-                        {formatCurrency(
-                          order.total,
-                        )}
+                        {order.total === null
+                            ? "Price unavailable"
+                            : formatPrice(order.total)}
                       </strong>
                     </div>
 

@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 
 import ThemeToggle from "../common/ThemeToggle";
+import { useCurrency } from "../../contexts/CurrencyContext";
+import usFlag from "../../assets/flags/us.svg";
+import ngFlag from "../../assets/flags/ng.svg";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTrackOrder } from "../../contexts/TrackOrderContext";
 import { useCart } from "../../contexts/CartContext";
@@ -68,6 +71,8 @@ export default function Navbar() {
   const { openTrackOrder } = useTrackOrder();
   const { itemCount, openCart } = useCart();
   const { theme } = useTheme();
+  const { currency, setCurrency } = useCurrency();
+  const [currencyOpen, setCurrencyOpen] = useState(false);
 
   const light = theme === "light";
 
@@ -431,27 +436,113 @@ export default function Navbar() {
             </nav>
 
 
-            {/* Appearance */}
+            {/* Appearance + Currency */}
+<div
+  className={[
+    "relative flex shrink-0 items-center justify-between",
+    "transition-all duration-500 ease-out delay-150",
+    menuOpen
+      ? "translate-x-0 opacity-100"
+      : "translate-x-10 opacity-0",
+    "border-t px-5 py-5",
+    light ? "border-black/10" : "border-white/10",
+  ].join(" ")}
+>
+  <ThemeToggle />
 
-            <div
-              className={[
-                "flex shrink-0 items-center justify-between",
-                "transition-all duration-500 ease-out delay-150",
-                menuOpen
-                  ? "translate-x-0 opacity-100"
-                  : "translate-x-10 opacity-0",
-                "border-t px-5 py-5",
-                light ? "border-black/10" : "border-white/10",
-              ].join(" ")}
-            >
-              <span className="text-sm font-medium">
-                Appearance
-              </span>
+  <div className="relative">
+    <button
+      type="button"
+      onClick={() => setCurrencyOpen((open) => !open)}
+      aria-label={`Select currency. Current currency: ${currency}`}
+      aria-expanded={currencyOpen}
+      className={[
+        "flex h-9 items-center gap-2 rounded-full border px-3",
+        "text-xs font-medium transition-all duration-200",
+        light
+          ? "border-black/10 bg-black/[0.04] text-neutral-900 hover:bg-black/[0.08]"
+          : "border-white/10 bg-white/[0.06] text-white hover:bg-white/[0.10]",
+      ].join(" ")}
+    >
+      <img
+        src={currency === "USD" ? usFlag : ngFlag}
+        alt=""
+        className="h-3.5 w-5 rounded-[2px] object-cover"
+      />
+      <span>{currency}</span>
+      {currency === "USD" && (
+        <span className="text-[9px] opacity-50">
+        </span>
+      )}
+    </button>
 
-              <ThemeToggle />
-            </div>
+    {currencyOpen && (
+      <div
+        className={[
+          "absolute bottom-11 right-0 z-[3100] w-24 overflow-hidden rounded-xl border p-1",
+          "shadow-xl backdrop-blur-xl",
+          light
+            ? "border-black/10 bg-white/95"
+            : "border-white/10 bg-neutral-950/95",
+        ].join(" ")}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setCurrency("USD");
+            setCurrencyOpen(false);
+          }}
+          className={[
+            "flex w-full items-center gap-2 rounded-lg px-2.5 py-2",
+            "text-xs transition-colors",
+            currency === "USD"
+              ? light
+                ? "bg-black/[0.06] text-neutral-950"
+                : "bg-white/[0.08] text-white"
+              : light
+                ? "text-neutral-600 hover:bg-black/[0.04]"
+                : "text-white/60 hover:bg-white/[0.06]",
+          ].join(" ")}
+        >
+          <img
+            src={usFlag}
+            alt=""
+            className="h-3.5 w-5 rounded-[2px] object-cover"
+          />
+          <span>USD</span>
+        </button>
 
-          </aside>
+        <button
+          type="button"
+          onClick={() => {
+            setCurrency("NGN");
+            setCurrencyOpen(false);
+          }}
+          className={[
+            "flex w-full items-center gap-2 rounded-lg px-2.5 py-2",
+            "text-xs transition-colors",
+            currency === "NGN"
+              ? light
+                ? "bg-black/[0.06] text-neutral-950"
+                : "bg-white/[0.08] text-white"
+              : light
+                ? "text-neutral-600 hover:bg-black/[0.04]"
+                : "text-white/60 hover:bg-white/[0.06]",
+          ].join(" ")}
+        >
+          <img
+            src={ngFlag}
+            alt=""
+            className="h-3.5 w-5 rounded-[2px] object-cover"
+          />
+          <span>NGN</span>
+        </button>
+      </div>
+    )}
+  </div>
+</div>
+
+</aside>
         </div>
       )}
     </>
