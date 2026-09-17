@@ -35,6 +35,8 @@ class OrderResponse(BaseModel):
     order_id: str
     reference: str
     amount: int
+    shipping: int = 0
+    tax: int = 0
     currency: str = "NGN"
     customer: CustomerDetails
     items: List[OrderItem]

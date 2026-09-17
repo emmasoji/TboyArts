@@ -8,6 +8,7 @@ export interface Artwork {
   title: string;
   image: string;
   price: number;
+  shipping_fee: number;
   description: string;
   dimensions: string;
   year: number;

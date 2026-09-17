@@ -4,6 +4,7 @@ export interface Artwork {
   id: string;
   title: string | null;
   price: number | null;
+  shipping_fee: number | null;
   category: string | null;
   medium: string | null;
   dimensions: string | null;

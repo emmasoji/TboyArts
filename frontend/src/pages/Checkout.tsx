@@ -1,5 +1,12 @@
-;import { useEffect, useMemo, useState } from "react";
-import { City, Country, State } from "country-state-city";
+;import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  getCitiesOfState,
+  getCountries,
+  getStatesOfCountry,
+  type ICity,
+  type ICountry,
+  type IState,
+} from "@countrystatecity/countries-browser";
 import {
   AsYouType,
   getCountryCallingCode,
@@ -14,12 +21,14 @@ import {
   ArrowLeftRight,
   Building2,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
   Loader2,
   Hash,
   MapPin,
+  Search,
   ShoppingBag,
   X,
 } from "lucide-react";
@@ -116,29 +125,23 @@ export default function Checkout() {
     verified: { title: "Payment Verified" },
   }[step];
 
+  const [countryOptions, setCountryOptions] = useState<ICountry[]>([]);
+  const [stateOptions, setStateOptions] = useState<IState[]>([]);
+  const [cityOptions, setCityOptions] = useState<ICity[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(true);
+  const [statesLoading, setStatesLoading] = useState(false);
+  const [citiesLoading, setCitiesLoading] = useState(false);
+
   const selectedCountry = useMemo(
     () =>
-      Country.getAllCountries().find(
+      countryOptions.find(
         (country) => country.name === customer.country,
       ),
-    [customer.country],
+    [countryOptions, customer.country],
   );
 
   const selectedCountryCode =
-    selectedCountry?.isoCode as CountryCode | undefined;
-
-  const countryOptions = useMemo(
-    () => Country.getAllCountries(),
-    [],
-  );
-
-  const stateOptions = useMemo(() => {
-    if (!selectedCountry) {
-      return [];
-    }
-
-    return State.getStatesOfCountry(selectedCountry.isoCode);
-  }, [selectedCountry]);
+    selectedCountry?.iso2 as CountryCode | undefined;
 
   const selectedState = useMemo(
     () =>
@@ -148,15 +151,113 @@ export default function Checkout() {
     [stateOptions, customer.state],
   );
 
-  const cityOptions = useMemo(() => {
-    if (!selectedCountry || !selectedState) {
-      return [];
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCountries() {
+      setLocationsLoading(true);
+
+      try {
+        const countries = await getCountries();
+
+        if (!cancelled) {
+          setCountryOptions(countries);
+        }
+      } catch {
+        if (!cancelled) {
+          setCountryOptions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLocationsLoading(false);
+        }
+      }
     }
 
-    return City.getCitiesOfState(
-      selectedCountry.isoCode,
-      selectedState.isoCode,
-    );
+    void loadCountries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStates() {
+      if (!selectedCountry) {
+        setStateOptions([]);
+        setCityOptions([]);
+        return;
+      }
+
+      setStatesLoading(true);
+      setStateOptions([]);
+      setCityOptions([]);
+
+      try {
+        const states = await getStatesOfCountry(
+          selectedCountry.iso2,
+        );
+
+        if (!cancelled) {
+          setStateOptions(states);
+        }
+      } catch {
+        if (!cancelled) {
+          setStateOptions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setStatesLoading(false);
+        }
+      }
+    }
+
+    void loadStates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCities() {
+      if (!selectedCountry || !selectedState) {
+        setCityOptions([]);
+        return;
+      }
+
+      setCitiesLoading(true);
+      setCityOptions([]);
+
+      try {
+        const cities = await getCitiesOfState(
+          selectedCountry.iso2,
+          selectedState.iso2,
+        );
+
+        if (!cancelled) {
+          setCityOptions(cities);
+        }
+      } catch {
+        if (!cancelled) {
+          setCityOptions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setCitiesLoading(false);
+        }
+      }
+    }
+
+    void loadCities();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCountry, selectedState]);
 
   const phoneCountryCode =
@@ -226,17 +327,17 @@ export default function Checkout() {
         const data = await response.json();
         const code = String(data?.country_code || "").toUpperCase();
 
-        const detected = Country.getAllCountries().find(
-          (country) => country.isoCode === code,
+        const detected = countryOptions.find(
+          (country) => country.iso2 === code,
         );
 
         if (
           !cancelled &&
           detected &&
-          detected.isoCode !== "NG"
+          detected.iso2 !== "NG"
         ) {
           setDetectedCountryCode(
-            detected.isoCode as CountryCode,
+            detected.iso2 as CountryCode,
           );
         }
       } catch {
@@ -501,7 +602,7 @@ export default function Checkout() {
 
     if (country) {
       setDetectedCountryCode(
-        country.isoCode as CountryCode,
+        country.iso2 as CountryCode,
       );
     }
   }
@@ -845,6 +946,41 @@ export default function Checkout() {
               ))}
             </div>
 
+            <div className="mt-6 rounded-2xl bg-[var(--bg-primary)] p-5 text-left">
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="opacity-60">Subtotal</span>
+                  <span>
+                    {formatPrice(
+                      paidOrder.order.items.reduce(
+                        (sum, item) => sum + item.subtotal,
+                        0,
+                      ),
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="opacity-60">Shipping</span>
+                  <span>
+                    {paidOrder.order.shipping > 0
+                      ? formatPrice(paidOrder.order.shipping)
+                      : "Free"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="opacity-60">Tax</span>
+                  <span>{formatPrice(paidOrder.order.tax)}</span>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-4 text-base font-semibold">
+                  <span>Total</span>
+                  <span>{formatPrice(paidOrder.order.amount)}</span>
+                </div>
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={() => navigate("/shop")}
@@ -1104,7 +1240,7 @@ export default function Checkout() {
                   placeholder="you@example.com"
                 />
 
-                <SelectField
+                <SearchableSelectField
                   label="Country"
                   value={customer.country}
                   onChange={handleCountryChange}
@@ -1112,6 +1248,7 @@ export default function Checkout() {
                     (country) => country.name,
                   )}
                   placeholder="Select your country"
+                  loading={locationsLoading}
                 />
 
                 <div>
@@ -1156,7 +1293,7 @@ export default function Checkout() {
                         onClick={() => {
                           const detected = countryOptions.find(
                             (country) =>
-                              country.isoCode ===
+                              country.iso2 ===
                               detectedCountryCode,
                           );
 
@@ -1172,7 +1309,7 @@ export default function Checkout() {
                         <span className="font-medium">
                           {countryOptions.find(
                             (country) =>
-                              country.isoCode ===
+                              country.iso2 ===
                               detectedCountryCode,
                           )?.name}
                         </span>
@@ -1182,7 +1319,7 @@ export default function Checkout() {
                     )}
                 </div>
 
-                <SelectField
+                <SearchableSelectField
                   label={
                     selectedCountryCode === "US" ||
                     selectedCountryCode === "CA"
@@ -1199,13 +1336,11 @@ export default function Checkout() {
                       ? "Select state or region"
                       : "Select a country first"
                   }
-                  disabled={
-                    !selectedCountry ||
-                    stateOptions.length === 0
-                  }
+                  disabled={!selectedCountry}
+                  loading={statesLoading}
                 />
 
-                <SelectField
+                <SearchableSelectField
                   label="City"
                   value={customer.city}
                   onChange={(value) =>
@@ -1219,10 +1354,8 @@ export default function Checkout() {
                       ? "Select city"
                       : "Select a state or region first"
                   }
-                  disabled={
-                    !selectedState ||
-                    cityOptions.length === 0
-                  }
+                  disabled={!selectedState}
+                  loading={citiesLoading}
                 />
 
                 <div className="md:col-span-2">
@@ -1322,6 +1455,60 @@ export default function Checkout() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                <div className="mt-6 border-t border-[var(--border-color)] pt-5">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="opacity-60">Subtotal</span>
+                      <span>
+                        {formatPrice(
+                          items.reduce(
+                            (sum, item) =>
+                              sum + Number(item.price) * item.quantity,
+                            0,
+                          ),
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="opacity-60">Shipping</span>
+                      <span>
+                        {(() => {
+                          const shipping = items.reduce(
+                            (sum, item) =>
+                              sum + Number(item.shipping_fee || 0),
+                            0,
+                          );
+
+                          return shipping > 0
+                            ? formatPrice(shipping)
+                            : "Free";
+                        })()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="opacity-60">Tax</span>
+                      <span>{formatPrice(0)}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-4 text-base font-semibold">
+                      <span>Total</span>
+                      <span>
+                        {formatPrice(
+                          items.reduce(
+                            (sum, item) =>
+                              sum +
+                              Number(item.price) * item.quantity +
+                              Number(item.shipping_fee || 0),
+                            0,
+                          ),
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1704,13 +1891,14 @@ function Input({
   );
 }
 
-function SelectField({
+function SearchableSelectField({
   label,
   value,
   onChange,
   options,
   placeholder,
   disabled = false,
+  loading = false,
 }: {
   label: string;
   value: string;
@@ -1718,30 +1906,156 @@ function SelectField({
   options: string[];
   placeholder: string;
   disabled?: boolean;
+  loading?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setSearch("");
+      return;
+    }
+
+    const handleOutsideClick = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+
+    document.addEventListener(
+      "pointerdown",
+      handleOutsideClick,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handleOutsideClick,
+      );
+    };
+  }, [open]);
+
+  const filteredOptions = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      return options;
+    }
+
+    return options.filter((option) =>
+      option.toLowerCase().includes(query),
+    );
+  }, [options, search]);
+
+  function handleSelect(option: string) {
+    onChange(option);
+    setOpen(false);
+    setSearch("");
+  }
+
   return (
-    <label className="block">
+    <div
+      ref={dropdownRef}
+      className="relative"
+    >
       <span className="mb-2 block text-sm font-medium">
         {label}
       </span>
 
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="w-full appearance-none rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-sm outline-none transition focus:border-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-45"
+      <button
+        type="button"
+        disabled={disabled || loading}
+        onClick={() => {
+          if (!disabled && !loading) {
+            setOpen((previous) => !previous);
+          }
+        }}
+        className="flex w-full items-center justify-between rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 text-left text-sm outline-none transition hover:border-[var(--text-primary)] focus:border-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-45"
       >
-        <option value="">
-          {placeholder}
-        </option>
+        <span className={value ? "" : "opacity-45"}>
+          {loading
+            ? "Loading..."
+            : value || placeholder}
+        </span>
 
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </label>
+        <ChevronDown
+          size={17}
+          strokeWidth={1.8}
+          className={`shrink-0 opacity-50 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--surface)] shadow-2xl">
+          <div className="border-b border-[var(--border-color)] p-3">
+            <div className="relative">
+              <Search
+                size={16}
+                strokeWidth={1.8}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 opacity-45"
+              />
+
+              <input
+                type="text"
+                value={search}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+                autoFocus
+                placeholder={`Search ${label.toLowerCase()}...`}
+                className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-[var(--text-primary)]"
+              />
+            </div>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto p-1.5">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleSelect(option)}
+                  className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[var(--bg-secondary)] ${
+                    option === value
+                      ? "font-medium"
+                      : ""
+                  }`}
+                >
+                  <span className="truncate">
+                    {option}
+                  </span>
+
+                  {option === value && (
+                    <Check
+                      size={16}
+                      strokeWidth={2}
+                      className="ml-auto shrink-0 opacity-60"
+                    />
+                  )}
+                </button>
+              ))
+            ) : (
+              <p className="px-3 py-4 text-center text-sm opacity-45">
+                No results found
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -21,7 +21,7 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
 
     artworks = await select(
         "artworks",
-        columns="id,title,price,image,status",
+        columns="id,title,price,image,status,shipping_fee",
         filters=None,
     )
 
@@ -32,6 +32,7 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
 
     order_items = []
     subtotal = Decimal("0")
+    shipping = Decimal("0")
 
     for requested_item in request.items:
         artwork = artwork_map.get(requested_item.artwork_id)
@@ -61,6 +62,11 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
 
         subtotal += item_subtotal
 
+        shipping_fee = Decimal(str(artwork.get("shipping_fee") or 0))
+        if shipping_fee < 0:
+            shipping_fee = Decimal("0")
+        shipping += shipping_fee
+
         order_items.append(
             {
                 "artwork_id": artwork["id"],
@@ -71,7 +77,6 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
             }
         )
 
-    shipping = Decimal("0")
     tax = Decimal("0")
     total = subtotal + shipping + tax
 
@@ -133,6 +138,8 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
         order_id=order_id,
         reference=order_number,
         amount=int(total),
+        shipping=int(shipping),
+        tax=int(tax),
         currency="NGN",
         customer=request.customer,
         items=response_items,
@@ -203,6 +210,8 @@ async def get_checkout_order(
         order_id=str(order["id"]),
         reference=order.get("order_number") or "",
         amount=int(float(order.get("total") or 0)),
+        shipping=int(float(order.get("shipping") or 0)),
+        tax=int(float(order.get("tax") or 0)),
         currency="NGN",
         customer=customer,
         items=response_items,

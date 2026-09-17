@@ -9,14 +9,18 @@ import {
   X,
   Upload,
   Image as ImageIcon,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 
 import { supabase } from "../../../lib/supabase";
 import ErrorState from "../../errors/ErrorState";
+import { useAdminTheme } from "../../../contexts/AdminThemeContext";
 
 export interface ArtworkFormData {
   title: string;
   price: string;
+  shipping_fee: string;
   category: string;
   medium: string;
   dimensions: string;
@@ -45,6 +49,7 @@ interface TaxonomyItem {
 const emptyForm: ArtworkFormData = {
   title: "",
   price: "",
+  shipping_fee: "0",
   category: "",
   medium: "",
   dimensions: "",
@@ -61,8 +66,13 @@ export default function ArtworkFormModal({
   onClose,
   onSubmit,
 }: ArtworkFormModalProps) {
+  const { theme } = useAdminTheme();
+  const isLight = theme === "light";
   const fileInputRef =
     useRef<HTMLInputElement>(null);
+
+  const shippingDropdownRef =
+    useRef<HTMLDivElement>(null);
 
   const [form, setForm] =
     useState<ArtworkFormData>({
@@ -79,8 +89,6 @@ export default function ArtworkFormModal({
   const [loadingTaxonomy, setLoadingTaxonomy] =
     useState(true);
 
-  const [taxonomyError, setTaxonomyError] =
-    useState<string | null>(null);
 
   const [isDragging, setIsDragging] =
     useState(false);
@@ -89,6 +97,12 @@ export default function ArtworkFormModal({
     useState<File | null>(null);
 
   const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [shippingOpen, setShippingOpen] =
+    useState(false);
+
+  const [shippingEditing, setShippingEditing] =
     useState(false);
 
   const [submitError, setSubmitError] =
@@ -107,11 +121,39 @@ export default function ArtworkFormModal({
     loadTaxonomy();
   }, []);
 
+  useEffect(() => {
+    if (!shippingOpen) return;
+
+    const handleShippingOutsideClick = (
+      event: PointerEvent,
+    ) => {
+      const target = event.target as Node;
+
+      if (
+        shippingDropdownRef.current &&
+        !shippingDropdownRef.current.contains(target)
+      ) {
+        setShippingOpen(false);
+        setShippingEditing(false);
+      }
+    };
+
+    document.addEventListener(
+      "pointerdown",
+      handleShippingOutsideClick,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handleShippingOutsideClick,
+      );
+    };
+  }, [shippingOpen]);
+
   async function loadTaxonomy() {
     try {
       setLoadingTaxonomy(true);
-      setTaxonomyError(null);
-      setTaxonomyError(null);
 
       const [
         categoriesResult,
@@ -156,11 +198,6 @@ export default function ArtworkFormModal({
         error,
       );
 
-      setTaxonomyError(
-        error instanceof Error
-          ? error.message
-          : "We couldn't load categories and mediums. Please try again.",
-      );
     } finally {
       setLoadingTaxonomy(false);
     }
@@ -313,6 +350,23 @@ export default function ArtworkFormModal({
         .artwork-backdrop-fade {
           animation: artworkBackdropFade 450ms ease-out both;
         }
+
+        @keyframes shippingDropdownOpen {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .shipping-dropdown-open {
+          animation: shippingDropdownOpen 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          transform-origin: top;
+        }
       `}</style>
 
       {/* BACKDROP */}
@@ -325,13 +379,11 @@ export default function ArtworkFormModal({
       {/* SLIDE PANEL */}
 
       <div
-        className="
-          absolute inset-y-0 right-0
-          flex w-full flex-col
-          bg-[#0d0d0f]
-          shadow-2xl
-          animate-[modalOpen_450ms_cubic-bezier(0.16,1,0.3,1)]
-        "
+        className={`absolute inset-y-0 right-0 flex w-full flex-col ${
+          isLight
+            ? "bg-white text-black"
+            : "bg-[#0d0d0f] text-white"
+        } shadow-2xl animate-[modalOpen_450ms_cubic-bezier(0.16,1,0.3,1)]`}
       >
 
         {/* HEADER */}
@@ -656,7 +708,7 @@ export default function ArtworkFormModal({
 
                   </div>
 
-                  {/* PRICE + CATEGORY */}
+                  {/* PRICE + SHIPPING FEE */}
 
                   <div className="
                     grid
@@ -710,26 +762,14 @@ export default function ArtworkFormModal({
 
                     </div>
 
-                    {taxonomyError && (
-                      <div className="mb-6">
-                        <ErrorState
-                          type="network"
-                          title="Unable to Load Categories"
-                          message={taxonomyError}
-                          actionLabel="Try Again"
-                          onAction={() => {
-                            void loadTaxonomy();
-                          }}
-                        />
-                      </div>
-                    )}
+                    {/* SHIPPING FEE */}
 
-                    {/* CATEGORY DROPDOWN */}
-
-                    <div>
+                    <div
+                      ref={shippingDropdownRef}
+                      className="relative"
+                    >
 
                       <label
-                        htmlFor="artwork-category"
                         className="
                           mb-2
                           block
@@ -738,56 +778,328 @@ export default function ArtworkFormModal({
                           text-white/50
                         "
                       >
-                        Category
+                        Shipping Fee
                       </label>
 
-                      <select
-                        id="artwork-category"
-                        value={form.category}
-                        onChange={(event) =>
-                          updateField(
-                            "category",
-                            event.target.value,
-                          )
-                        }
-                        disabled={loadingTaxonomy}
-                        className=" admin-artwork-select
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShippingOpen(
+                            (open) => !open,
+                          );
+                          setShippingEditing(false);
+                        }}
+                        className="
+                          flex
                           w-full
+                          items-center
+                          justify-between
                           rounded-xl
                           border
                           border-white/10
-                          bg-[#161618]
+                          bg-white/[0.03]
                           px-4
                           py-3.5
                           text-sm
                           text-white
                           outline-none
+                          transition
+                          hover:bg-white/[0.05]
                           focus:border-white/30
-                          disabled:cursor-not-allowed
-                          disabled:opacity-50
                         "
                       >
 
-                        <option value="">
-                          {loadingTaxonomy
-                            ? "Loading categories..."
-                            : "Select a category"}
-                        </option>
+                        <span>
+                          {form.shipping_fee &&
+                          Number(form.shipping_fee) > 0
+                            ? `₦${Number(form.shipping_fee).toLocaleString()}`
+                            : "Free"}
+                        </span>
 
-                        {categories.map(
-                          (category) => (
-                            <option
-                              key={category.id}
-                              value={category.name}
-                            >
-                              {category.name}
-                            </option>
-                          ),
-                        )}
+                        <span
+                          className={`
+                            text-white/40
+                            transition-transform
+                            duration-200
+                            ${
+                              shippingOpen
+                                ? "rotate-180"
+                                : ""
+                            }
+                          `}
+                        >
+                          <ChevronDown
+                            size={16}
+                            strokeWidth={1.8}
+                            className="transition-transform duration-200"
+                          />
+                        </span>
 
-                      </select>
+                      </button>
+
+                      {shippingOpen && (
+                        <div
+                          className={`shipping-dropdown-open
+                            absolute
+                            left-0
+                            right-0
+                            top-full
+                            z-50
+                            mt-2
+                            overflow-hidden
+                            rounded-xl
+                            border
+                            shadow-2xl
+                            ${
+                              isLight
+                                ? "border-black/10 bg-white"
+                                : "border-white/10 bg-[#161618]"
+                            }
+                          `}
+                        >
+
+                          {!shippingEditing ? (
+                            <div className="p-1">
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  updateField(
+                                    "shipping_fee",
+                                    "0",
+                                  );
+                                  setShippingOpen(false);
+                                }}
+                                className="
+                                  flex
+                                  w-full
+                                  items-center
+                                  justify-between
+                                  rounded-lg
+                                  px-3
+                                  py-3
+                                  text-left
+                                  text-sm
+                                  text-white
+                                  transition
+                                  hover:bg-white/[0.06]
+                                "
+                              >
+                                <span>Free</span>
+
+                                {Number(
+                                  form.shipping_fee,
+                                ) === 0 && (
+                                  <span className="text-white">
+                                    <Check
+                                      size={16}
+                                      strokeWidth={2}
+                                    />
+                                  </span>
+                                )}
+
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShippingEditing(true)
+                                }
+                                className="
+                                  flex
+                                  w-full
+                                  items-center
+                                  justify-between
+                                  rounded-lg
+                                  px-3
+                                  py-3
+                                  text-left
+                                  text-sm
+                                  text-white
+                                  transition
+                                  hover:bg-white/[0.06]
+                                "
+                              >
+                                <span>
+                                  Enter amount
+                                </span>
+
+                                {Number(
+                                  form.shipping_fee,
+                                ) > 0 && (
+                                  <span className="text-white">
+                                    <Check
+                                      size={16}
+                                      strokeWidth={2}
+                                    />
+                                  </span>
+                                )}
+
+                              </button>
+
+                            </div>
+                          ) : (
+                            <div className="p-3">
+
+                              <div className="
+                                flex
+                                items-center
+                                gap-2
+                              ">
+
+                                <div className="
+                                  flex
+                                  flex-1
+                                  items-center
+                                  rounded-lg
+                                  border
+                                  border-white/10
+                                  bg-white/[0.04]
+                                  px-3
+                                ">
+
+                                  <span className="text-sm text-white/40">
+                                    ₦
+                                  </span>
+
+                                  <input
+                                    autoFocus
+                                    type="number"
+                                    min="0"
+                                    value={form.shipping_fee}
+                                    onChange={(event) =>
+                                      updateField(
+                                        "shipping_fee",
+                                        event.target.value,
+                                      )
+                                    }
+                                    placeholder="Amount"
+                                    className="
+                                      w-full
+                                      bg-transparent
+                                      px-2
+                                      py-2.5
+                                      text-sm
+                                      text-white
+                                      outline-none
+                                      placeholder:text-white/20
+                                    "
+                                  />
+
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (
+                                      !form.shipping_fee ||
+                                      Number(
+                                        form.shipping_fee,
+                                      ) < 0
+                                    ) {
+                                      return;
+                                    }
+
+                                    setShippingEditing(
+                                      false,
+                                    );
+                                    setShippingOpen(false);
+                                  }}
+                                  className="
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-lg
+                                    bg-white
+                                    text-black
+                                    transition
+                                    hover:bg-white/90
+                                  "
+                                  aria-label="Confirm shipping fee"
+                                >
+                                  <Check
+                                    size={16}
+                                    strokeWidth={2}
+                                  />
+                                </button>
+
+                              </div>
+
+                            </div>
+                          )}
+
+                        </div>
+                      )}
 
                     </div>
+
+                  </div>
+
+                  {/* CATEGORY */}
+
+                  <div>
+
+                    <label
+                      htmlFor="artwork-category"
+                      className="
+                        mb-2
+                        block
+                        text-xs
+                        font-medium
+                        text-white/50
+                      "
+                    >
+                      Category
+                    </label>
+
+                    <select
+                      id="artwork-category"
+                      value={form.category}
+                      onChange={(event) =>
+                        updateField(
+                          "category",
+                          event.target.value,
+                        )
+                      }
+                      disabled={loadingTaxonomy}
+                      className="admin-artwork-select
+                        w-full
+                        rounded-xl
+                        border
+                        border-white/10
+                        bg-[#161618]
+                        px-4
+                        py-3.5
+                        text-sm
+                        text-white
+                        outline-none
+                        focus:border-white/30
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                      "
+                    >
+
+                      <option value="">
+                        {loadingTaxonomy
+                          ? "Loading categories..."
+                          : "Select a category"}
+                      </option>
+
+                      {categories.map(
+                        (category) => (
+                          <option
+                            key={category.id}
+                            value={category.name}
+                          >
+                            {category.name}
+                          </option>
+                        ),
+                      )}
+
+                    </select>
 
                   </div>
 

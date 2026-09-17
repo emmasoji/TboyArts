@@ -19,6 +19,8 @@ export interface CreateOrderResponse {
   order_id: string;
   reference: string;
   amount: number;
+  shipping: number;
+  tax: number;
   currency: string;
   customer: CustomerDetails;
   items: {

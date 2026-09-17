@@ -193,6 +193,7 @@ export default function Shop() {
       title: artwork.title ?? "",
       image: artwork.image ?? "",
       price: artwork.price ?? 0,
+      shipping_fee: artwork.shipping_fee ?? 0,
       description:
         artwork.description ?? "",
       dimensions:
@@ -226,6 +227,7 @@ export default function Shop() {
       title: artwork.title,
       image: artwork.image,
       price: artwork.price,
+      shipping_fee: artwork.shipping_fee ?? 0,
       description: artwork.description,
       dimensions: artwork.dimensions,
       year: artwork.year,

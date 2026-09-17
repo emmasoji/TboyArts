@@ -230,6 +230,10 @@ export default function ArtworkTable() {
           ? Number(data.price)
           : null,
 
+        shipping_fee: data.shipping_fee
+          ? Number(data.shipping_fee)
+          : 0,
+
         category:
           data.category || null,
 
@@ -297,6 +301,10 @@ export default function ArtworkTable() {
           price: data.price
             ? Number(data.price)
             : null,
+
+          shipping_fee: data.shipping_fee
+            ? Number(data.shipping_fee)
+            : 0,
 
           category:
             data.category || null,
@@ -1550,6 +1558,10 @@ export default function ArtworkTable() {
             price:
               editingArtwork.price?.toString() ??
               "",
+
+            shipping_fee:
+              editingArtwork.shipping_fee?.toString() ??
+              "0",
 
             category:
               editingArtwork.category ??
