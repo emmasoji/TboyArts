@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -39,6 +40,8 @@ function ArtworkCard({
               "TboyArts artwork"
             }
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />

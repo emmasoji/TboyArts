@@ -1431,6 +1431,7 @@ export default function Checkout() {
                       <img
                         src={item.image}
                         alt={item.title}
+            decoding="async"
                         className="h-20 w-20 rounded-xl object-cover"
                       />
 

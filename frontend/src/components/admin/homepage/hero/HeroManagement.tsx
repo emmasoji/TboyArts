@@ -145,7 +145,7 @@ export default function HeroManagement() {
         await supabase.storage
           .from("homepage")
           .upload(filePath, file, {
-            cacheControl: "3600",
+            cacheControl: "2592000",
             upsert: true,
           });
 

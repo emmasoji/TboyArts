@@ -140,6 +140,8 @@ export default function ArtistStory({
                 src={artistImage}
                 alt="TboyArts artist"
                 className="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
             )}
           </div>

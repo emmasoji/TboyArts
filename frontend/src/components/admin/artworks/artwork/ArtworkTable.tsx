@@ -231,7 +231,7 @@ export default function ArtworkTable() {
         filePath,
         imageFile,
         {
-          cacheControl: "3600",
+          cacheControl: "2592000",
           upsert: false,
           contentType: imageFile.type,
         },

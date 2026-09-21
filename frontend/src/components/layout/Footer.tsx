@@ -30,7 +30,7 @@ export default function Footer() {
     );
 
   const getLogoUrl = () =>
-    `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/Logo/logo.png?v=${Date.now()}`;
+    `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/Logo/logo.png`;
 
   const [logoUrl, setLogoUrl] = useState(getLogoUrl);
 

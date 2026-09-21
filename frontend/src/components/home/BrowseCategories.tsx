@@ -172,6 +172,8 @@ export default function BrowseCategories({
                 <img
                   src={category.image}
                   alt={category.name}
+    loading="lazy"
+    decoding="async"
                   className="
                     absolute
                     inset-0

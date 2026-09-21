@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -366,10 +367,7 @@ export default function FeaturedArtwork({
                       <div className="featured-interactive-image-wrap">
 
                         <img
-                          src={
-                            artwork.image ??
-                            ""
-                          }
+                          src={artwork.image ?? ""}
                           alt={
                             artwork.title ??
                             "Featured artwork"

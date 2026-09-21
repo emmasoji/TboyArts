@@ -3,6 +3,7 @@ import type { Artwork } from "../../types/artwork";
 import { useCurrency } from "../../contexts/CurrencyContext";
 import { isPurchasable } from "../../data/artworkUtils";
 
+
 interface ArtworkCardProps {
   artwork: Artwork;
 
@@ -38,10 +39,11 @@ export default function ArtworkCard({
         <div className="artwork-card-image-wrapper">
 
           <img
-            src={artwork.image}
+            src={artwork.image ?? ""}
             alt={artwork.title}
             className="artwork-card-image"
             loading="lazy"
+            decoding="async"
           />
 
           {artwork.status !== "available" && (

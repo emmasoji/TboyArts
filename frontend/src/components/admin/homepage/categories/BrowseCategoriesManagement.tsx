@@ -164,6 +164,7 @@ export default function BrowseCategoriesManagement() {
           .from("categories")
           .upload(filePath, file, {
             upsert: true,
+            cacheControl: "2592000",
           });
 
       if (uploadError) {

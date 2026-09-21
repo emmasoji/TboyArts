@@ -245,7 +245,7 @@ export default function ArtistManagement() {
       await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(filePath, imageFile, {
-          cacheControl: "3600",
+          cacheControl: "2592000",
           upsert: false,
           contentType: imageFile.type,
         });

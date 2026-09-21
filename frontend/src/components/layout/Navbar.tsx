@@ -41,7 +41,7 @@ export default function Navbar() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [navbarLoading, setNavbarLoading] = useState(true);
   const getLogoUrl = () =>
-    `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/Logo/logo.png?v=${Date.now()}`;
+    `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/Logo/logo.png`;
 
   const [logoUrl, setLogoUrl] = useState(getLogoUrl);
 

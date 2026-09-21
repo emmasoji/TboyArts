@@ -119,6 +119,7 @@ export default function Hero() {
           src={settings.heroImage}
           alt="Original TboyArts artwork"
           className="home-hero-image"
+          decoding="async"
         />
       )}
 
