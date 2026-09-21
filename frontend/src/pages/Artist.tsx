@@ -210,7 +210,7 @@ export default function Artist() {
               )}
             </div>
 
-            <div className="mt-10 max-w-[900px] text-base leading-[1.8] text-[var(--muted-foreground,#777)] sm:mt-14 sm:text-xl lg:text-2xl [&>p]:mb-7 [&>p:last-child]:mb-0 [&>h3]:mt-12 [&>h3]:mb-5 [&>h3]:font-serif [&>h3]:text-3xl [&>h3]:font-normal [&>h3]:leading-tight [&>h3]:tracking-[-0.02em] sm:[&>h3]:text-4xl lg:[&>h3]:text-5xl">
+            <div className="mt-10 max-w-[900px] text-base leading-[1.8] text-[var(--muted-foreground,#777)] sm:mt-14 sm:text-xl lg:text-2xl [&>p]:mb-7 [&>p:last-child]:mb-0 [&>h2]:mt-14 [&>h2]:mb-6 [&>h2]:font-serif [&>h2]:text-3xl [&>h2]:font-normal [&>h2]:leading-tight [&>h2]:tracking-[-0.02em] sm:[&>h2]:text-4xl lg:[&>h2]:text-5xl [&>h3]:mt-10 [&>h3]:mb-5 [&>h3]:font-serif [&>h3]:text-2xl [&>h3]:font-normal [&>h3]:leading-tight [&>h3]:tracking-[-0.02em] sm:[&>h3]:text-3xl lg:[&>h3]:text-4xl">
               <ReactMarkdown>
                 {profile.hero_text?.replace(/^(#{1,6})(?=\S)/gm, "$1 ")}
               </ReactMarkdown>
