@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 
 import {
@@ -209,9 +210,11 @@ export default function Artist() {
               )}
             </div>
 
-            <p className="mt-10 max-w-[680px] text-base leading-[1.8] text-[var(--muted-foreground,#777)] sm:mt-14 sm:text-xl lg:text-2xl">
-              {profile.hero_text}
-            </p>
+            <div className="mt-10 max-w-[900px] text-base leading-[1.8] text-[var(--muted-foreground,#777)] sm:mt-14 sm:text-xl lg:text-2xl [&>p]:mb-7 [&>p:last-child]:mb-0 [&>h3]:mt-12 [&>h3]:mb-5 [&>h3]:font-serif [&>h3]:text-3xl [&>h3]:font-normal [&>h3]:leading-tight [&>h3]:tracking-[-0.02em] sm:[&>h3]:text-4xl lg:[&>h3]:text-5xl">
+              <ReactMarkdown>
+                {profile.hero_text?.replace(/^(#{1,6})(?=\S)/gm, "$1 ")}
+              </ReactMarkdown>
+            </div>
 
           </div>
 
