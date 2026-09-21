@@ -1,17 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Image,
   Save,
   Loader2,
-  Upload,
 } from "lucide-react";
 import {
   getAboutSettings,
   updateAboutSettings,
   type AboutSettings,
 } from "../../../../services/homepageService";
-import { supabase } from "../../../../lib/supabase";
-import API_URL from "../../../../config/api";
 import ErrorState from "../../../errors/ErrorState";
 
 export default function AboutManagement() {
@@ -21,13 +17,9 @@ export default function AboutManagement() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const fileInputRef =
-    useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     async function loadSettings() {
@@ -74,132 +66,6 @@ export default function AboutManagement() {
     setError("");
   }
 
-  async function handleImageUpload(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
-    const file = event.target.files?.[0];
-
-    if (!file || !settings) return;
-
-    try {
-      setUploading(true);
-      setMessage("");
-      setError("");
-
-      if (!file.type.startsWith("image/")) {
-        throw new Error(
-          "Please select an image file.",
-        );
-      }
-
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession();
-
-      const accessToken =
-        sessionData.session?.access_token;
-
-      if (sessionError || !accessToken) {
-        throw new Error(
-          "Authentication required before uploading the about image.",
-        );
-      }
-
-      const storageResponse = await fetch(
-        `${API_URL}/api/admin/storage/usage`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-
-      if (!storageResponse.ok) {
-        throw new Error(
-          "Unable to verify available storage. Upload cancelled.",
-        );
-      }
-
-      const storageData = await storageResponse.json();
-
-      if (!storageData.success) {
-        throw new Error(
-          storageData.message ||
-            "Unable to verify available storage. Upload cancelled.",
-        );
-      }
-
-      if (
-        storageData.usedBytes >= storageData.limitBytes ||
-        storageData.usedBytes + file.size >
-          storageData.limitBytes
-      ) {
-        throw new Error(
-          "Storage limit reached. This about image cannot be uploaded.",
-        );
-      }
-
-      const extension =
-        file.name.split(".").pop()?.toLowerCase() ||
-        "jpg";
-
-      const fileName =
-        `about-${Date.now()}.${extension}`;
-
-      const filePath =
-        `about/${fileName}`;
-
-      const { error: uploadError } =
-        await supabase.storage
-          .from("homepage")
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: true,
-          });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const {
-        data: publicUrlData,
-      } = supabase.storage
-        .from("homepage")
-        .getPublicUrl(filePath);
-
-      if (!publicUrlData?.publicUrl) {
-        throw new Error(
-          "Could not create a public image URL.",
-        );
-      }
-
-      updateField(
-        "aboutImage",
-        publicUrlData.publicUrl,
-      );
-
-      setMessage(
-        "Image uploaded. Click Save About Settings to apply it.",
-      );
-    } catch (err) {
-      console.error(
-        "About image upload failed:",
-        err,
-      );
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to upload about image.",
-      );
-    } finally {
-      setUploading(false);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  }
-
   async function handleSave() {
     if (!settings) return;
 
@@ -207,8 +73,6 @@ export default function AboutManagement() {
       setSaving(true);
       setMessage("");
       setError("");
-
-      const oldImageUrl = settings.aboutImage;
 
       await updateAboutSettings(
         settings.id,
@@ -222,9 +86,6 @@ export default function AboutManagement() {
           aboutDescription:
             settings.aboutDescription,
 
-          aboutImage:
-            settings.aboutImage,
-
           aboutButtonText:
             settings.aboutButtonText,
 
@@ -232,59 +93,6 @@ export default function AboutManagement() {
             settings.aboutButtonUrl,
         },
       );
-
-      if (
-        oldImageUrl &&
-        settings.aboutImage &&
-        oldImageUrl !== settings.aboutImage
-      ) {
-        try {
-          const marker =
-            "/storage/v1/object/public/";
-
-          const markerIndex =
-            oldImageUrl.indexOf(marker);
-
-          if (markerIndex !== -1) {
-            const storagePath =
-              decodeURIComponent(
-                oldImageUrl.slice(
-                  markerIndex + marker.length,
-                ),
-              );
-
-            const bucketMarker =
-              storagePath.indexOf("/");
-
-            if (bucketMarker !== -1) {
-              const bucket =
-                storagePath.slice(0, bucketMarker);
-
-              const oldFilePath =
-                storagePath.slice(bucketMarker + 1);
-
-              if (bucket && oldFilePath) {
-                const { error: storageError } =
-                  await supabase.storage
-                    .from(bucket)
-                    .remove([oldFilePath]);
-
-                if (storageError) {
-                  console.error(
-                    "About image replacement cleanup failed:",
-                    storageError,
-                  );
-                }
-              }
-            }
-          }
-        } catch (storageError) {
-          console.error(
-            "About image replacement cleanup failed:",
-            storageError,
-          );
-        }
-      }
 
       setMessage(
         "About settings saved successfully.",
@@ -330,23 +138,6 @@ export default function AboutManagement() {
           <div className="h-12 w-32 animate-pulse rounded-xl bg-[var(--admin-surface-muted)]" />
         </div>
       </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <ErrorState
-        type="network"
-        title="Unable to Load About Settings"
-        message={
-          loadError ||
-          "We couldn't load the homepage About settings. Please check your internet connection and try again."
-        }
-        actionLabel="Try Again"
-        onAction={() => {
-          window.location.reload();
-        }}
-      />
     );
   }
 
@@ -519,81 +310,6 @@ export default function AboutManagement() {
             </div>
           </div>
 
-          {/* IMAGE */}
-
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-white/40">
-              About Image
-            </p>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-
-            <button
-              type="button"
-              onClick={() =>
-                fileInputRef.current?.click()
-              }
-              disabled={uploading}
-              className="group relative h-44 w-72 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] text-left transition hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {settings.aboutImage ? (
-                <>
-                  <img
-                    src={settings.aboutImage}
-                    alt="Current about section"
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                  />
-
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/45">
-                    <span className="flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-xs font-medium text-white opacity-0 backdrop-blur-md transition group-hover:opacity-100">
-                      {uploading ? (
-                        <>
-                          <Loader2
-                            size={14}
-                            className="animate-spin"
-                          />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload size={14} />
-                          Replace Image
-                        </>
-                      )}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-white/30">
-                  {uploading ? (
-                    <Loader2
-                      size={26}
-                      className="animate-spin"
-                    />
-                  ) : (
-                    <Image size={26} />
-                  )}
-
-                  <span className="text-xs">
-                    {uploading
-                      ? "Uploading..."
-                      : "Click to upload image"}
-                  </span>
-                </div>
-              )}
-            </button>
-
-            <p className="mt-2 text-xs text-white/25">
-              Click the image to replace it.
-            </p>
-          </div>
-
           {/* MESSAGES */}
 
           {error && (
@@ -613,7 +329,7 @@ export default function AboutManagement() {
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving || uploading}
+            disabled={saving}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? (

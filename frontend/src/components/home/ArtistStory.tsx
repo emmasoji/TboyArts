@@ -5,6 +5,11 @@ import { Link } from "react-router-dom";
 import Skeleton from "../ui/Skeleton";
 
 import {
+  getArtistProfile,
+  type ArtistProfile,
+} from "../../services/artistService";
+
+import {
   getAboutSettings,
   type AboutSettings,
 } from "../../services/homepageService";
@@ -16,6 +21,9 @@ interface ArtistStoryProps {
 export default function ArtistStory({
   onError,
 }: ArtistStoryProps) {
+  const [profile, setProfile] =
+    useState<ArtistProfile | null>(null);
+
   const [settings, setSettings] =
     useState<AboutSettings | null>(null);
 
@@ -28,19 +36,23 @@ export default function ArtistStory({
   useEffect(() => {
     let mounted = true;
 
-    async function loadAboutSettings() {
+    async function loadArtistProfile() {
       try {
         setError("");
 
-        const data =
-          await getAboutSettings();
+        const [profileData, aboutData] =
+          await Promise.all([
+            getArtistProfile(),
+            getAboutSettings(),
+          ]);
 
         if (mounted) {
-          setSettings(data);
+          setProfile(profileData);
+          setSettings(aboutData);
         }
       } catch (error) {
         console.error(
-          "Failed to load homepage about settings:",
+          "Failed to load artist profile for homepage:",
           error,
         );
 
@@ -60,7 +72,7 @@ export default function ArtistStory({
       }
     }
 
-    loadAboutSettings();
+    loadArtistProfile();
 
     return () => {
       mounted = false;
@@ -85,8 +97,8 @@ export default function ArtistStory({
     settings?.aboutDescription ||
     "Every artwork is created to capture emotion, imagination and moments that words cannot fully express.";
 
-  const aboutImage =
-    settings?.aboutImage || "";
+  const artistImage =
+    profile?.profile_image?.trim() || "";
 
   const aboutButtonText =
     settings?.aboutButtonText ||
@@ -125,7 +137,7 @@ export default function ArtistStory({
               />
             ) : (
               <img
-                src={aboutImage}
+                src={artistImage}
                 alt="TboyArts artist"
                 className="h-full w-full object-cover"
               />

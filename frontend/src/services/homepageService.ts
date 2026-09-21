@@ -110,7 +110,6 @@ export interface AboutSettings {
   aboutLabel: string;
   aboutTitle: string;
   aboutDescription: string;
-  aboutImage: string;
   aboutButtonText: string;
   aboutButtonUrl: string;
   updatedAt: string | null;
@@ -124,7 +123,6 @@ export async function getAboutSettings(): Promise<AboutSettings> {
       about_label,
       about_title,
       about_description,
-      about_image,
       about_button_text,
       about_button_url,
       updated_at
@@ -145,7 +143,6 @@ export async function getAboutSettings(): Promise<AboutSettings> {
     aboutLabel: data.about_label ?? "",
     aboutTitle: data.about_title ?? "",
     aboutDescription: data.about_description ?? "",
-    aboutImage: data.about_image ?? "",
     aboutButtonText: data.about_button_text ?? "",
     aboutButtonUrl: data.about_button_url ?? "",
     updatedAt: data.updated_at ?? null,
@@ -162,7 +159,6 @@ export async function updateAboutSettings(
       about_label: settings.aboutLabel,
       about_title: settings.aboutTitle,
       about_description: settings.aboutDescription,
-      about_image: settings.aboutImage,
       about_button_text: settings.aboutButtonText,
       about_button_url: settings.aboutButtonUrl,
       updated_at: new Date().toISOString(),
@@ -173,7 +169,6 @@ export async function updateAboutSettings(
       about_label,
       about_title,
       about_description,
-      about_image,
       about_button_text,
       about_button_url,
       updated_at
@@ -193,7 +188,6 @@ export async function updateAboutSettings(
     aboutLabel: data.about_label ?? "",
     aboutTitle: data.about_title ?? "",
     aboutDescription: data.about_description ?? "",
-    aboutImage: data.about_image ?? "",
     aboutButtonText: data.about_button_text ?? "",
     aboutButtonUrl: data.about_button_url ?? "",
     updatedAt: data.updated_at ?? null,
