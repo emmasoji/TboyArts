@@ -18,24 +18,6 @@ export default function SEO({
   useEffect(() => {
     document.title = title || DEFAULT_TITLE;
 
-    const structuredDataId = "tboyarts-website-schema";
-    let structuredData = document.getElementById(
-      structuredDataId,
-    ) as HTMLScriptElement | null;
-
-    if (!structuredData) {
-      structuredData = document.createElement("script");
-      structuredData.id = structuredDataId;
-      structuredData.type = "application/ld+json";
-      document.head.appendChild(structuredData);
-    }
-
-    structuredData.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      name: "TboyArts",
-      url: SITE_URL,
-    });
 
     const setMeta = (
       selector: string,
