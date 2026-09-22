@@ -108,8 +108,7 @@ export async function saveFooterSettings(
 
   const { data, error } = await supabase
     .from("site_settings")
-    .update(payload)
-    .eq("id", 1)
+    .upsert(payload, { onConflict: "id" })
     .select()
     .single();
 
