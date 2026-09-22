@@ -7,6 +7,7 @@ import {
 import {
   faInstagram,
   faFacebookF,
+  faWhatsapp,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 
@@ -123,6 +124,20 @@ export default function Footer() {
               >
                 <FontAwesomeIcon
                   icon={faFacebookF}
+                />
+              </a>
+            )}
+
+            {settings.whatsapp_url && (
+              <a
+                href={settings.whatsapp_url}
+                target="_blank"
+                rel="noreferrer"
+                className="footer-social"
+                aria-label="WhatsApp"
+              >
+                <FontAwesomeIcon
+                  icon={faWhatsapp}
                 />
               </a>
             )}
