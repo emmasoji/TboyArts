@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import AnalyticsTracker from "./components/analytics/AnalyticsTracker";
 import ErrorBoundary from "./components/errors/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
@@ -15,6 +16,7 @@ ReactDOM.createRoot(
 ).render(
   <React.StrictMode>
     <BrowserRouter>
+      <AnalyticsTracker />
       <ThemeProvider>
         <CurrencyProvider>
         <TrackOrderProvider>

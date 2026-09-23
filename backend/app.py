@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
@@ -11,6 +13,8 @@ from routes.tracking import router as tracking_router
 from routes.newsletter import router as newsletter_router
 from routes.admin_orders import router as admin_orders_router
 from routes.currency import router as currency_router
+
+SERVER_STARTED_AT = datetime.now(timezone.utc)
 
 app = FastAPI(
     title="TboyArts API",
@@ -45,9 +49,20 @@ app.include_router(admin_orders_router)
 app.include_router(currency_router)
 
 
+@app.get("/api/monitor")
+async def monitor_check():
+    return {
+        "success": True,
+        "status": "online",
+        "started_at": SERVER_STARTED_AT.isoformat(),
+        "server_time": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     return {
         "success": True,
         "message": "TboyArts backend is running",
+        "started_at": SERVER_STARTED_AT.isoformat(),
     }
