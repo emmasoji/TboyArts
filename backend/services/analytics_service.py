@@ -3,7 +3,12 @@ import os
 from datetime import date, timedelta
 
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
-from google.analytics.data_v1beta.types import DateRange, Metric, RunReportRequest
+from google.analytics.data_v1beta.types import (
+    DateRange,
+    Dimension,
+    Metric,
+    RunReportRequest,
+)
 
 
 GA4_PROPERTY_ID = "555611486"
@@ -36,18 +41,42 @@ def get_analytics_summary() -> dict:
                 end_date=end_date.isoformat(),
             )
         ],
+        dimensions=[
+            Dimension(name="date"),
+        ],
         metrics=[
             Metric(name="activeUsers"),
             Metric(name="screenPageViews"),
+            Metric(name="sessions"),
         ],
     )
 
     response = client.run_report(request)
 
-    values = response.rows[0].metric_values if response.rows else []
+    daily = []
 
-    visitors = int(values[0].value) if len(values) > 0 else 0
-    page_views = int(values[1].value) if len(values) > 1 else 0
+    for row in response.rows:
+        values = row.metric_values
+        date_value = row.dimension_values[0].value
+
+        visitors = int(values[0].value)
+        page_views = int(values[1].value)
+        traffic = int(values[2].value)
+
+        daily.append(
+            {
+                "date": date_value,
+                "visitors": visitors,
+                "page_views": page_views,
+                "traffic": traffic,
+            }
+        )
+
+    total_visitors = sum(item["visitors"] for item in daily)
+    total_page_views = sum(item["page_views"] for item in daily)
+    total_traffic = sum(item["traffic"] for item in daily)
+
+    days = len(daily) or 1
 
     return {
         "success": True,
@@ -55,7 +84,22 @@ def get_analytics_summary() -> dict:
             "start": start_date.isoformat(),
             "end": end_date.isoformat(),
         },
-        "visitors": visitors,
-        "page_views": page_views,
-        "traffic": page_views,
+        "daily": daily,
+        "summary": {
+            "visitors": {
+                "monthly_average": round(total_visitors / days, 2),
+                "daily_average": round(total_visitors / days, 2),
+                "total": total_visitors,
+            },
+            "page_views": {
+                "monthly_average": round(total_page_views / days, 2),
+                "daily_average": round(total_page_views / days, 2),
+                "total": total_page_views,
+            },
+            "traffic": {
+                "monthly_average": round(total_traffic / days, 2),
+                "daily_average": round(total_traffic / days, 2),
+                "total": total_traffic,
+            },
+        },
     }
