@@ -20,8 +20,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTrackOrder } from "../../contexts/TrackOrderContext";
 import { useCurrency } from "../../contexts/CurrencyContext";
 
-type SearchMode = "order-number" | "email";
-
 type TrackingItem = {
   artwork_id: string;
   title: string | null;
@@ -152,10 +150,9 @@ export default function TrackOrderModal() {
     isTrackOrderOpen,
     closeTrackOrder,
     trackOrderNumber,
+    trackOrderEmail,
+    setTrackOrderEmail,
   } = useTrackOrder();
-
-  const [searchMode, setSearchMode] =
-    useState<SearchMode>("order-number");
 
   const [searchValue, setSearchValue] =
     useState("");
@@ -208,19 +205,9 @@ export default function TrackOrderModal() {
     }
 
     if (trackOrderNumber.trim()) {
-      setSearchMode("order-number");
       setSearchValue(trackOrderNumber.trim().toUpperCase());
     }
   }, [isTrackOrderOpen, trackOrderNumber]);
-
-  const handleSearchModeChange = (
-    mode: SearchMode,
-  ) => {
-    setSearchMode(mode);
-    setSearchValue("");
-    setOrder(null);
-    setError("");
-  };
 
   const handleSubmit = async (
     event: React.FormEvent,
@@ -228,25 +215,29 @@ export default function TrackOrderModal() {
     event.preventDefault();
 
     const value = searchValue.trim();
+    const email = trackOrderEmail.trim().toLowerCase();
 
-    if (!value || loading) return;
+    if (!value || !email || loading) {
+      if (!email && value) {
+        setError(
+          "Please enter the email address used for this order.",
+        );
+      }
+      return;
+    }
 
     setLoading(true);
     setError("");
     setOrder(null);
 
     try {
-      const parameter =
-        searchMode === "order-number"
-          ? `order_number=${encodeURIComponent(
-              value.toUpperCase(),
-            )}`
-          : `email=${encodeURIComponent(
-              value.toLowerCase(),
-            )}`;
+      const parameters = new URLSearchParams({
+        order_number: value.toUpperCase(),
+        email,
+      });
 
       const response = await fetch(
-        `${API_BASE_URL}/api/tracking/order?${parameter}`,
+        `${API_BASE_URL}/api/tracking/order?${parameters.toString()}`,
       );
 
       const data = await response.json();
@@ -278,67 +269,11 @@ export default function TrackOrderModal() {
     }
   };
 
-  useEffect(() => {
-    if (
-      !isTrackOrderOpen ||
-      !trackOrderNumber.trim() ||
-      order ||
-      loading
-    ) {
-      return;
-    }
-
-    const searchOrder = async () => {
-      const value = trackOrderNumber.trim().toUpperCase();
-
-      setLoading(true);
-      setError("");
-      setOrder(null);
-
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/tracking/order?order_number=${encodeURIComponent(value)}`,
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            response.status === 404
-              ? "We couldn't find this order."
-              : data.detail ||
-                  "Unable to track your order right now.",
-          );
-        }
-
-        if (!data.success || !data.order) {
-          throw new Error("Unable to retrieve your order.");
-        }
-
-        setOrder(data.order);
-      } catch (searchError) {
-        setError(
-          searchError instanceof Error
-            ? searchError.message
-            : "Unable to track your order.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void searchOrder();
-  }, [
-    isTrackOrderOpen,
-    trackOrderNumber,
-    order,
-    loading,
-  ]);
-
   const handleTrackAnother = () => {
     setOrder(null);
     setError("");
     setSearchValue("");
+    setTrackOrderEmail("");
   };
 
   const StatusIcon = order
@@ -409,83 +344,46 @@ export default function TrackOrderModal() {
             <div className="tracking-modal-body">
               {!order ? (
                 <>
-                  <div className="tracking-search-tabs">
-                    <button
-                      type="button"
-                      className={
-                        searchMode === "order-number"
-                          ? "tracking-tab active"
-                          : "tracking-tab"
-                      }
-                      onClick={() =>
-                        handleSearchModeChange(
-                          "order-number",
-                        )
-                      }
-                    >
-                      <Hash size={17} />
-                      Order number
-                    </button>
-
-                    <button
-                      type="button"
-                      className={
-                        searchMode === "email"
-                          ? "tracking-tab active"
-                          : "tracking-tab"
-                      }
-                      onClick={() =>
-                        handleSearchModeChange(
-                          "email",
-                        )
-                      }
-                    >
-                      <Mail size={17} />
-                      Email
-                    </button>
-                  </div>
-
                   <form
                     className="tracking-form"
                     onSubmit={handleSubmit}
                   >
                     <label htmlFor="tracking-search">
-                      {searchMode === "order-number"
-                        ? "Order number"
-                        : "Email address"}
+                      Order number
                     </label>
 
                     <div className="tracking-input-wrapper">
-                      {searchMode ===
-                      "order-number" ? (
-                        <Hash size={18} />
-                      ) : (
-                        <Mail size={18} />
-                      )}
+                      <Hash size={18} />
 
                       <input
                         id="tracking-search"
-                        type={
-                          searchMode === "email"
-                            ? "email"
-                            : "text"
-                        }
+                        type="text"
                         value={searchValue}
                         onChange={(event) =>
-                          setSearchValue(
-                            event.target.value,
-                          )
+                          setSearchValue(event.target.value)
                         }
-                        placeholder={
-                          searchMode === "order-number"
-                            ? "TB-XXXXXX"
-                            : "customer@email.com"
+                        placeholder="TB-XXXXXX"
+                        autoComplete="off"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    <label htmlFor="tracking-email">
+                      Email address
+                    </label>
+
+                    <div className="tracking-input-wrapper">
+                      <Mail size={18} />
+
+                      <input
+                        id="tracking-email"
+                        type="email"
+                        value={trackOrderEmail}
+                        onChange={(event) =>
+                          setTrackOrderEmail(event.target.value)
                         }
-                        autoComplete={
-                          searchMode === "email"
-                            ? "email"
-                            : "off"
-                        }
+                        placeholder="customer@email.com"
+                        autoComplete="email"
                         disabled={loading}
                       />
                     </div>
@@ -512,6 +410,7 @@ export default function TrackOrderModal() {
                       className="tracking-submit"
                       disabled={
                         !searchValue.trim() ||
+                        !trackOrderEmail.trim() ||
                         loading
                       }
                     >

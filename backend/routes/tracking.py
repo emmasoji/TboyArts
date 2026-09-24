@@ -16,16 +16,10 @@ async def track_order_endpoint(
     order_number: str | None = Query(default=None),
     email: str | None = Query(default=None),
 ):
-    if not order_number and not email:
+    if not order_number or not email:
         raise HTTPException(
             status_code=400,
-            detail="Order number or email is required.",
-        )
-
-    if order_number and email:
-        raise HTTPException(
-            status_code=400,
-            detail="Use either order number or email, not both.",
+            detail="Order number and email are required.",
         )
 
     try:

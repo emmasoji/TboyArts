@@ -5,17 +5,14 @@ from utils.supabase import select
 
 async def track_order(
     *,
-    order_number: str | None = None,
-    email: str | None = None,
+    order_number: str,
+    email: str,
 ) -> dict[str, Any] | None:
-    if not order_number and not email:
-        raise ValueError("Order number or email is required.")
+    normalized_order_number = order_number.strip().upper()
+    normalized_email = email.strip().lower()
 
-    filters = (
-        {"order_number": order_number.strip().upper()}
-        if order_number
-        else {"email": email.strip().lower()}
-    )
+    if not normalized_order_number or not normalized_email:
+        raise ValueError("Order number and email are required.")
 
     orders = await select(
         "orders",
@@ -30,7 +27,10 @@ async def track_order(
             "created_at,"
             "updated_at"
         ),
-        filters=filters,
+        filters={
+            "order_number": normalized_order_number,
+            "email": normalized_email,
+        },
     )
 
     if not orders:
@@ -49,7 +49,6 @@ async def track_order(
         "id": order_id,
         "order_number": order.get("order_number"),
         "customer_name": order.get("customer_name"),
-        "email": order.get("email"),
         "total": order.get("total"),
         "payment_status": order.get("payment_status"),
         "status": order.get("status"),

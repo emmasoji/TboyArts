@@ -62,7 +62,7 @@ async def get_welcome_newsletter() -> dict[str, Any]:
 
     try:
         markdown_message = (
-            get_welcome_newsletter_markdown()
+            await get_welcome_newsletter_markdown()
             or ""
         ).strip()
     except Exception as exc:

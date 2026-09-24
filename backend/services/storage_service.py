@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-import requests
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -54,7 +54,9 @@ def _storage_headers(
     return headers
 
 
-def _list_files(prefix: str = "") -> list[dict[str, Any]]:
+async def _list_files(
+    prefix: str = "",
+) -> list[dict[str, Any]]:
     if not SUPABASE_URL:
         raise RuntimeError("SUPABASE_URL is not configured")
 
@@ -63,25 +65,25 @@ def _list_files(prefix: str = "") -> list[dict[str, Any]]:
         f"{STORAGE_BUCKET}"
     )
 
-    response = requests.post(
-        url,
-        headers={
-            **_headers(),
-            "Content-Type": "application/json",
-        },
-        json={
-            "prefix": prefix,
-            "limit": 1000,
-            "offset": 0,
-            "sortBy": {
-                "column": "name",
-                "order": "asc",
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        response = await client.post(
+            url,
+            headers={
+                **_headers(),
+                "Content-Type": "application/json",
             },
-        },
-        timeout=20,
-    )
+            json={
+                "prefix": prefix,
+                "limit": 1000,
+                "offset": 0,
+                "sortBy": {
+                    "column": "name",
+                    "order": "asc",
+                },
+            },
+        )
 
-    if not response.ok:
+    if response.status_code >= 400:
         raise RuntimeError(
             f"Supabase Storage list failed: {response.text}"
         )
@@ -89,8 +91,10 @@ def _list_files(prefix: str = "") -> list[dict[str, Any]]:
     return response.json()
 
 
-def _get_storage_usage(prefix: str = "") -> tuple[int, int]:
-    files = _list_files(prefix)
+async def _get_storage_usage(
+    prefix: str = "",
+) -> tuple[int, int]:
+    files = await _list_files(prefix)
 
     file_count = 0
     used_bytes = 0
@@ -112,8 +116,10 @@ def _get_storage_usage(prefix: str = "") -> tuple[int, int]:
                 pass
 
         if metadata == {}:
-            nested_count, nested_bytes = _get_storage_usage(
-                f"{prefix}{name}/"
+            nested_count, nested_bytes = (
+                await _get_storage_usage(
+                    f"{prefix}{name}/"
+                )
             )
 
             file_count += nested_count
@@ -122,8 +128,8 @@ def _get_storage_usage(prefix: str = "") -> tuple[int, int]:
     return file_count, used_bytes
 
 
-def get_storage_usage() -> dict[str, Any]:
-    file_count, used_bytes = _get_storage_usage()
+async def get_storage_usage() -> dict[str, Any]:
+    file_count, used_bytes = await _get_storage_usage()
 
     available_bytes = max(
         STORAGE_LIMIT_BYTES - used_bytes,
@@ -149,7 +155,7 @@ def get_storage_usage() -> dict[str, Any]:
     }
 
 
-def upload_logo(
+async def upload_logo(
     file_bytes: bytes,
     content_type: str = "image/png",
 ) -> dict[str, Any]:
@@ -161,17 +167,17 @@ def upload_logo(
         f"{LOGO_BUCKET}/{LOGO_PATH}"
     )
 
-    response = requests.post(
-        url,
-        headers=_storage_headers(
-            content_type=content_type,
-            upsert=True,
-        ),
-        data=file_bytes,
-        timeout=30,
-    )
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            url,
+            headers=_storage_headers(
+                content_type=content_type,
+                upsert=True,
+            ),
+            content=file_bytes,
+        )
 
-    if not response.ok:
+    if response.status_code >= 400:
         raise RuntimeError(
             f"Logo upload failed: {response.text}"
         )
@@ -187,7 +193,7 @@ def upload_logo(
     }
 
 
-def logo_exists() -> bool:
+async def logo_exists() -> bool:
     if not SUPABASE_URL:
         return False
 
@@ -196,16 +202,16 @@ def logo_exists() -> bool:
         f"{LOGO_BUCKET}/{LOGO_PATH}"
     )
 
-    response = requests.head(
-        url,
-        headers=_headers(),
-        timeout=20,
-    )
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        response = await client.head(
+            url,
+            headers=_headers(),
+        )
 
-    return response.ok
+    return response.status_code < 400
 
 
-def upload_welcome_newsletter(
+async def upload_welcome_newsletter(
     file_bytes: bytes,
 ) -> dict[str, Any]:
     if not SUPABASE_URL:
@@ -217,17 +223,17 @@ def upload_welcome_newsletter(
         f"{WELCOME_NEWSLETTER_PATH}"
     )
 
-    response = requests.post(
-        url,
-        headers=_storage_headers(
-            content_type="text/markdown; charset=utf-8",
-            upsert=True,
-        ),
-        data=file_bytes,
-        timeout=30,
-    )
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            url,
+            headers=_storage_headers(
+                content_type="text/markdown; charset=utf-8",
+                upsert=True,
+            ),
+            content=file_bytes,
+        )
 
-    if not response.ok:
+    if response.status_code >= 400:
         raise RuntimeError(
             "Welcome newsletter upload failed: "
             f"{response.text}"
@@ -240,7 +246,7 @@ def upload_welcome_newsletter(
     }
 
 
-def delete_welcome_newsletter() -> dict[str, Any]:
+async def delete_welcome_newsletter() -> dict[str, Any]:
     if not SUPABASE_URL:
         raise RuntimeError("SUPABASE_URL is not configured")
 
@@ -248,20 +254,20 @@ def delete_welcome_newsletter() -> dict[str, Any]:
         f"{SUPABASE_URL}/storage/v1/object/remove"
     )
 
-    response = requests.post(
-        url,
-        headers={
-            **_headers(),
-            "Content-Type": "application/json",
-        },
-        json={
-            "bucketId": WELCOME_NEWSLETTER_BUCKET,
-            "prefixes": [WELCOME_NEWSLETTER_PATH],
-        },
-        timeout=30,
-    )
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            url,
+            headers={
+                **_headers(),
+                "Content-Type": "application/json",
+            },
+            json={
+                "bucketId": WELCOME_NEWSLETTER_BUCKET,
+                "prefixes": [WELCOME_NEWSLETTER_PATH],
+            },
+        )
 
-    if not response.ok:
+    if response.status_code >= 400:
         raise RuntimeError(
             "Welcome newsletter deletion failed: "
             f"{response.text}"
@@ -275,7 +281,7 @@ def delete_welcome_newsletter() -> dict[str, Any]:
     }
 
 
-def get_welcome_newsletter_markdown() -> str | None:
+async def get_welcome_newsletter_markdown() -> str | None:
     if not SUPABASE_URL:
         return None
 
@@ -285,16 +291,16 @@ def get_welcome_newsletter_markdown() -> str | None:
         f"{WELCOME_NEWSLETTER_PATH}"
     )
 
-    response = requests.get(
-        url,
-        headers=_headers(),
-        timeout=20,
-    )
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        response = await client.get(
+            url,
+            headers=_headers(),
+        )
 
     if response.status_code == 404:
         return None
 
-    if not response.ok:
+    if response.status_code >= 400:
         raise RuntimeError(
             "Welcome newsletter download failed: "
             f"{response.text}"
@@ -306,7 +312,7 @@ def get_welcome_newsletter_markdown() -> str | None:
     )
 
 
-def welcome_newsletter_exists() -> bool:
+async def welcome_newsletter_exists() -> bool:
     if not SUPABASE_URL:
         return False
 
@@ -316,10 +322,10 @@ def welcome_newsletter_exists() -> bool:
         f"{WELCOME_NEWSLETTER_PATH}"
     )
 
-    response = requests.head(
-        url,
-        headers=_headers(),
-        timeout=20,
-    )
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        response = await client.head(
+            url,
+            headers=_headers(),
+        )
 
-    return response.ok
+    return response.status_code < 400

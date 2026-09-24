@@ -28,6 +28,7 @@ async def select(
     table: str,
     columns: str = "*",
     filters: dict[str, Any] | None = None,
+    in_filters: dict[str, list[Any]] | None = None,
 ) -> list[dict[str, Any]]:
     params: dict[str, str] = {
         "select": columns,
@@ -36,6 +37,17 @@ async def select(
     if filters:
         for column, value in filters.items():
             params[column] = f"eq.{value}"
+
+    if in_filters:
+        for column, values in in_filters.items():
+            if not values:
+                continue
+
+            encoded_values = ",".join(
+                str(value) for value in values
+            )
+
+            params[column] = f"in.({encoded_values})"
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.get(
@@ -98,6 +110,25 @@ async def update(
     if response.status_code >= 400:
         raise RuntimeError(
             f"Supabase update failed: {response.text}"
+        )
+
+    return response.json()
+
+
+async def rpc(
+    function: str,
+    params: dict[str, Any],
+) -> Any:
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/{function}",
+            headers=_headers(),
+            json=params,
+        )
+
+    if response.status_code >= 400:
+        raise RuntimeError(
+            f"Supabase RPC failed: {response.text}"
         )
 
     return response.json()

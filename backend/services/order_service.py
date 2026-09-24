@@ -3,7 +3,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 from models.order import CreateOrderRequest, OrderResponse
-from utils.supabase import insert, select, update
+from utils.supabase import insert, select, update, rpc
 from services.paystack_service import (
     PaystackError,
     verify_transaction,
@@ -22,7 +22,7 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
     artworks = await select(
         "artworks",
         columns="id,title,price,image,status,shipping_fee",
-        filters=None,
+        in_filters={"id": artwork_ids},
     )
 
     artwork_map = {
@@ -101,25 +101,18 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
         "payment_method": "paystack",
     }
 
-    created_orders = await insert("orders", order_data)
+    transaction_result = await rpc(
+        "create_order_transaction",
+        {
+            "p_order": order_data,
+            "p_items": order_items,
+        },
+    )
 
-    if not created_orders:
+    if not transaction_result:
         raise RuntimeError("Failed to create order.")
 
-    created_order = created_orders[0]
-    order_id = str(created_order["id"])
-
-    for item in order_items:
-        item["order_id"] = order_id
-
-    try:
-        await insert("order_items", order_items)
-    except Exception:
-        # Remove the orphaned order if order_items creation fails.
-        # We intentionally don't silently continue with an incomplete order.
-        raise RuntimeError(
-            "Order was created but its artwork items could not be saved."
-        )
+    order_id = str(transaction_result["id"])
 
     response_items = [
         {

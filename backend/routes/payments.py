@@ -18,7 +18,7 @@ from services.payment_service import (
     mark_order_paid_from_payment,
 )
 from utils.rate_limit import limiter
-from utils.supabase import select, update
+from utils.supabase import select, update, rpc
 
 import os
 from dotenv import load_dotenv
@@ -94,8 +94,8 @@ async def initialize_payment(
                 ),
             )
 
-        # If an existing payment reference exists,
-        # check it before creating another transaction.
+        # Reuse an existing reference so repeated checkout
+        # attempts cannot create a new Paystack transaction.
         existing_reference = str(
             order.get("payment_reference") or ""
         ).strip()
@@ -147,10 +147,34 @@ async def initialize_payment(
             total * 100
         )
 
-        payment_reference = (
-            f"{order['order_number']}"
-            f"-PAY-{uuid4().hex[:10].upper()}"
-        )
+        if existing_reference:
+            payment_reference = existing_reference
+        else:
+            candidate_reference = (
+                f"{order['order_number']}"
+                f"-PAY-{uuid4().hex[:10].upper()}"
+            )
+
+            claimed_reference = await rpc(
+                "claim_payment_reference",
+                {
+                    "p_order_id": payment_request.order_id,
+                    "p_reference": candidate_reference,
+                },
+            )
+
+            payment_reference = str(
+                claimed_reference or ""
+            ).strip()
+
+            if not payment_reference:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "Unable to reserve a payment reference. "
+                        "Please try again."
+                    ),
+                )
 
         channel_map = {
             "card": "card",
