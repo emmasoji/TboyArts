@@ -28,20 +28,56 @@ def _get_client() -> BetaAnalyticsDataClient:
     )
 
 
-def get_analytics_summary() -> dict:
+def _validate_date_range(
+    start_date: date | None,
+    end_date: date | None,
+) -> tuple[date, date]:
+    today = date.today()
+
+    if start_date is None:
+        end_date = end_date or today
+        start_date = end_date - timedelta(days=30)
+
+    if end_date is None:
+        end_date = today
+
+    if start_date > end_date:
+        raise ValueError("Start date cannot be after end date.")
+
+    if (end_date - start_date).days > 365:
+        raise ValueError("Analytics date range cannot exceed 365 days.")
+
+    return start_date, end_date
+
+
+def _count_calendar_months(start_date: date, end_date: date) -> int:
+    return (
+        (end_date.year - start_date.year) * 12
+        + (end_date.month - start_date.month)
+        + 1
+    )
+
+
+def get_analytics_summary(
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> dict:
     client = _get_client()
 
-    end_date = date.today()
-    start_date = end_date - timedelta(days=30)
+    start_date, end_date = _validate_date_range(
+        start_date,
+        end_date,
+    )
 
-    request = RunReportRequest(
+    date_range = DateRange(
+        start_date=start_date.isoformat(),
+        end_date=end_date.isoformat(),
+    )
+
+    # Daily data for the chart.
+    daily_request = RunReportRequest(
         property=f"properties/{GA4_PROPERTY_ID}",
-        date_ranges=[
-            DateRange(
-                start_date=start_date.isoformat(),
-                end_date=end_date.isoformat(),
-            )
-        ],
+        date_ranges=[date_range],
         dimensions=[
             Dimension(name="date"),
         ],
@@ -52,32 +88,64 @@ def get_analytics_summary() -> dict:
         ],
     )
 
-    response = client.run_report(request)
+    # Aggregate data for accurate totals.
+    total_request = RunReportRequest(
+        property=f"properties/{GA4_PROPERTY_ID}",
+        date_ranges=[date_range],
+        metrics=[
+            Metric(name="activeUsers"),
+            Metric(name="screenPageViews"),
+            Metric(name="sessions"),
+        ],
+    )
+
+    daily_response = client.run_report(daily_request)
+    total_response = client.run_report(total_request)
 
     daily = []
 
-    for row in response.rows:
+    for row in daily_response.rows:
         values = row.metric_values
         date_value = row.dimension_values[0].value
-
-        visitors = int(values[0].value)
-        page_views = int(values[1].value)
-        traffic = int(values[2].value)
 
         daily.append(
             {
                 "date": date_value,
-                "visitors": visitors,
-                "page_views": page_views,
-                "traffic": traffic,
+                "visitors": int(values[0].value),
+                "page_views": int(values[1].value),
+                "traffic": int(values[2].value),
             }
         )
 
-    total_visitors = sum(item["visitors"] for item in daily)
-    total_page_views = sum(item["page_views"] for item in daily)
-    total_traffic = sum(item["traffic"] for item in daily)
+    total_values = (
+        total_response.rows[0].metric_values
+        if total_response.rows
+        else []
+    )
 
-    days = len(daily) or 1
+    total_visitors = (
+        int(total_values[0].value)
+        if len(total_values) > 0
+        else 0
+    )
+
+    total_page_views = (
+        int(total_values[1].value)
+        if len(total_values) > 1
+        else 0
+    )
+
+    total_traffic = (
+        int(total_values[2].value)
+        if len(total_values) > 2
+        else 0
+    )
+
+    number_of_days = (end_date - start_date).days + 1
+    number_of_months = _count_calendar_months(
+        start_date,
+        end_date,
+    )
 
     return {
         "success": True,
@@ -88,18 +156,36 @@ def get_analytics_summary() -> dict:
         "daily": daily,
         "summary": {
             "visitors": {
-                "monthly_average": round(total_visitors / days, 2),
-                "daily_average": round(total_visitors / days, 2),
+                "monthly_average": round(
+                    total_visitors / number_of_months,
+                    2,
+                ),
+                "daily_average": round(
+                    total_visitors / number_of_days,
+                    2,
+                ),
                 "total": total_visitors,
             },
             "page_views": {
-                "monthly_average": round(total_page_views / days, 2),
-                "daily_average": round(total_page_views / days, 2),
+                "monthly_average": round(
+                    total_page_views / number_of_months,
+                    2,
+                ),
+                "daily_average": round(
+                    total_page_views / number_of_days,
+                    2,
+                ),
                 "total": total_page_views,
             },
             "traffic": {
-                "monthly_average": round(total_traffic / days, 2),
-                "daily_average": round(total_traffic / days, 2),
+                "monthly_average": round(
+                    total_traffic / number_of_months,
+                    2,
+                ),
+                "daily_average": round(
+                    total_traffic / number_of_days,
+                    2,
+                ),
                 "total": total_traffic,
             },
         },

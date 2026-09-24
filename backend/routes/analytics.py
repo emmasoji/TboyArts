@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from datetime import date
+
+from fastapi import APIRouter, HTTPException, Query
 
 from services.analytics_service import (
     get_analytics_summary,
@@ -9,9 +11,26 @@ router = APIRouter(prefix="/api/monitor", tags=["monitor"])
 
 
 @router.get("/analytics")
-async def monitor_analytics():
+async def monitor_analytics(
+    start_date: date | None = Query(
+        default=None,
+        description="Analytics start date in YYYY-MM-DD format.",
+    ),
+    end_date: date | None = Query(
+        default=None,
+        description="Analytics end date in YYYY-MM-DD format.",
+    ),
+):
     try:
-        return get_analytics_summary()
+        return get_analytics_summary(
+            start_date=start_date,
+            end_date=end_date,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
     except Exception as exc:
         print("ANALYTICS ERROR:", exc)
         raise HTTPException(
