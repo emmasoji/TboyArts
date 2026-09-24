@@ -7,6 +7,7 @@ from google.analytics.data_v1beta.types import (
     DateRange,
     Dimension,
     Metric,
+    RunRealtimeReportRequest,
     RunReportRequest,
 )
 
@@ -102,4 +103,29 @@ def get_analytics_summary() -> dict:
                 "total": total_traffic,
             },
         },
+    }
+
+
+def get_realtime_analytics() -> dict:
+    client = _get_client()
+
+    request = RunRealtimeReportRequest(
+        property=f"properties/{GA4_PROPERTY_ID}",
+        metrics=[
+            Metric(name="activeUsers"),
+            Metric(name="screenPageViews"),
+        ],
+    )
+
+    response = client.run_realtime_report(request)
+
+    values = response.rows[0].metric_values if response.rows else []
+
+    active_users = int(values[0].value) if len(values) > 0 else 0
+    page_views = int(values[1].value) if len(values) > 1 else 0
+
+    return {
+        "success": True,
+        "active_users": active_users,
+        "page_views": page_views,
     }

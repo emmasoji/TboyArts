@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from services.analytics_service import get_analytics_summary
+from services.analytics_service import (
+    get_analytics_summary,
+    get_realtime_analytics,
+)
 
 router = APIRouter(prefix="/api/monitor", tags=["monitor"])
 
@@ -14,4 +17,16 @@ async def monitor_analytics():
         raise HTTPException(
             status_code=502,
             detail="Unable to retrieve analytics data.",
+        ) from exc
+
+
+@router.get("/analytics/realtime")
+async def monitor_analytics_realtime():
+    try:
+        return get_realtime_analytics()
+    except Exception as exc:
+        print("REALTIME ANALYTICS ERROR:", exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to retrieve realtime analytics data.",
         ) from exc
