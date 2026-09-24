@@ -9,3 +9,5 @@ python-multipart
 email-validator
 
 slowapi==0.1.10
+
+google-analytics-data==0.23.1

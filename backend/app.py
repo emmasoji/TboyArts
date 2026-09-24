@@ -13,6 +13,7 @@ from routes.tracking import router as tracking_router
 from routes.newsletter import router as newsletter_router
 from routes.admin_orders import router as admin_orders_router
 from routes.currency import router as currency_router
+from routes.analytics import router as analytics_router
 
 SERVER_STARTED_AT = datetime.now(timezone.utc)
 
@@ -47,6 +48,7 @@ app.include_router(tracking_router)
 app.include_router(newsletter_router)
 app.include_router(admin_orders_router)
 app.include_router(currency_router)
+app.include_router(analytics_router)
 
 
 @app.get("/api/monitor")
