@@ -35,6 +35,7 @@ app.add_middleware(
                 "https://tboyarts.netlify.app",
         "https://tboyarts.shop",
         "https://www.tboyarts.shop",
+        "https://emmanueloluwasoji.netlify.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
