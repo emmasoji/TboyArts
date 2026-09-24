@@ -10,6 +10,8 @@ type State = {
   error: Error | null;
 };
 
+const AUTO_REFRESH_KEY = "tboyarts-auto-refresh";
+
 export default class ErrorBoundary extends React.Component<
   Props,
   State
@@ -29,9 +31,37 @@ export default class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("TboyArts application error:", error);
     console.error("Component error information:", errorInfo);
+
+    const errorMessage =
+      error.message?.toLowerCase() || "";
+
+    const isChunkError =
+      errorMessage.includes("chunk") ||
+      errorMessage.includes("loading css chunk") ||
+      errorMessage.includes("dynamically imported module") ||
+      errorMessage.includes(
+        "failed to fetch dynamically imported module"
+      );
+
+    if (!isChunkError) {
+      return;
+    }
+
+    const alreadyRefreshed =
+      sessionStorage.getItem(AUTO_REFRESH_KEY) === "1";
+
+    if (alreadyRefreshed) {
+      sessionStorage.removeItem(AUTO_REFRESH_KEY);
+      return;
+    }
+
+    sessionStorage.setItem(AUTO_REFRESH_KEY, "1");
+
+    window.location.reload();
   }
 
   handleRefresh = () => {
+    sessionStorage.removeItem(AUTO_REFRESH_KEY);
     window.location.reload();
   };
 
@@ -44,11 +74,13 @@ export default class ErrorBoundary extends React.Component<
         errorMessage.includes("chunk") ||
         errorMessage.includes("loading css chunk") ||
         errorMessage.includes("dynamically imported module") ||
-        errorMessage.includes("failed to fetch dynamically imported module");
+        errorMessage.includes(
+          "failed to fetch dynamically imported module"
+        );
 
       return (
         <ErrorState
-          type={isChunkError ? "general" : "general"}
+          type="general"
           title={
             isChunkError
               ? "This Page Needs to Refresh"
