@@ -13,8 +13,10 @@ export default function AnalyticsTracker() {
   useEffect(() => {
     if (!window.gtag) return;
 
-    window.gtag("config", "G-F1TJ5CJ164", {
+    window.gtag("event", "page_view", {
       page_path: `${location.pathname}${location.search}`,
+      page_title: document.title,
+      page_location: window.location.href,
     });
   }, [location.pathname, location.search]);
 
