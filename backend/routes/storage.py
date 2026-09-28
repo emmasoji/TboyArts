@@ -35,7 +35,7 @@ async def storage_usage(
     _user: dict = Depends(require_authenticated_admin),
 ):
     try:
-        data = get_storage_usage()
+        data = await get_storage_usage()
 
         return {
             "success": True,
@@ -57,7 +57,7 @@ async def storage_usage(
 async def get_logo(
     _user: dict = Depends(require_authenticated_admin),
 ):
-    exists = logo_exists()
+    exists = await logo_exists()
 
     return {
         "exists": exists,
@@ -98,7 +98,7 @@ async def update_logo(
         )
 
     try:
-        result = upload_logo(data, content_type=content_type)
+        result = await upload_logo(data, content_type=content_type)
 
         return result
 
@@ -116,7 +116,7 @@ async def get_welcome_newsletter_file(
     _user: dict = Depends(require_authenticated_admin),
 ):
     try:
-        markdown = get_welcome_newsletter_markdown()
+        markdown = await get_welcome_newsletter_markdown()
 
         return {
             "exists": markdown is not None,
@@ -192,7 +192,7 @@ async def upload_welcome_newsletter_file(
         )
 
     try:
-        result = upload_welcome_newsletter(data)
+        result = await upload_welcome_newsletter(data)
 
         return result
 
@@ -213,7 +213,7 @@ async def remove_welcome_newsletter(
     _user: dict = Depends(require_authenticated_admin),
 ):
     try:
-        return delete_welcome_newsletter()
+        return await delete_welcome_newsletter()
 
     except Exception as exc:
         print(
