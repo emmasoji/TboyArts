@@ -15,7 +15,7 @@ import {
   CircleX,
   CreditCard,
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 
 import { useTrackOrder } from "../../contexts/TrackOrderContext";
 import { useCurrency } from "../../contexts/CurrencyContext";

@@ -1,3 +1,4 @@
+import { CheckoutRouteSkeleton } from "../components/ui/RouteLoadingFallback";
 ;import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getCitiesOfState,
@@ -846,17 +847,7 @@ export default function Checkout() {
           noIndex
         />
 
-        <main className="fixed inset-0 z-[10000] flex min-h-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]">
-          <div className="flex flex-col items-center justify-center">
-            <Loader2
-              size={28}
-              className="mb-5 animate-spin opacity-60"
-            />
-            <p className="text-sm opacity-70">
-              Please wait a moment
-            </p>
-          </div>
-        </main>
+        <CheckoutRouteSkeleton />
       </>
     );
   }

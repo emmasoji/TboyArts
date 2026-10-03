@@ -6,6 +6,7 @@ import AdminLogin from "../components/admin/auth/AdminLogin";
 import { AdminThemeProvider } from "../contexts/AdminThemeContext";
 import { supabase } from "../lib/supabase";
 import "../styles/admin.css";
+import { AdminRouteSkeleton } from "../components/ui/RouteLoadingFallback";
 
 export default function Admin() {
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -41,13 +42,7 @@ export default function Admin() {
   }, []);
 
   if (sessionLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-950 text-white">
-        <div className="text-sm text-neutral-500">
-          Loading...
-        </div>
-      </main>
-    );
+    return <AdminRouteSkeleton />;
   }
 
   return (

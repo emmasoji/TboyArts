@@ -17,12 +17,42 @@ export interface Artwork {
   updated_at: string | null;
   display_order: number | null;
   slug: string | null;
+  customer_visible: boolean;
 }
 
 export async function getArtworks(): Promise<Artwork[]> {
   const { data, error } = await supabase
     .from("artworks")
     .select("*")
+    .order("display_order", {
+      ascending: true,
+    })
+    .order("created_at", {
+      ascending: false,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as Artwork[];
+}
+
+/**
+ * Customer-facing artwork collection.
+ *
+ * This intentionally differs from getArtworks():
+ * - getArtworks() is used by admin and returns everything.
+ * - getCustomerArtworks() only returns artwork explicitly
+ *   marked visible to customers.
+ *
+ * Advertisement visibility is intentionally separate.
+ */
+export async function getCustomerArtworks(): Promise<Artwork[]> {
+  const { data, error } = await supabase
+    .from("artworks")
+    .select("*")
+    .eq("customer_visible", true)
     .order("display_order", {
       ascending: true,
     })

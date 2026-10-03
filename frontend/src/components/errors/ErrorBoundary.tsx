@@ -79,7 +79,8 @@ export default class ErrorBoundary extends React.Component<
         );
 
       return (
-        <ErrorState
+        <>
+          <ErrorState
           type="general"
           title={
             isChunkError
@@ -94,7 +95,9 @@ export default class ErrorBoundary extends React.Component<
           actionLabel="Refresh Page"
           onAction={this.handleRefresh}
           fullPage
-        />
+          />
+
+        </>
       );
     }
 

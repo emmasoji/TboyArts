@@ -9,6 +9,9 @@ import ArtistStory from "../components/home/ArtistStory";
 import HomeCTA from "../components/home/HomeCTA";
 import SEO from "../components/seo/SEO";
 import ErrorState from "../components/errors/ErrorState";
+import FeaturedAdvertisementModal from "../components/advertisements/FeaturedAdvertisementModal";
+import HomeAdvertisement from "../components/advertisements/HomeAdvertisement";
+import ScrollReveal from "../components/animations/ScrollReveal";
 
 export default function Home() {
   const [pageError, setPageError] = useState<string | null>(null);
@@ -19,7 +22,9 @@ export default function Home() {
         title="TboyArts — Contemporary Art"
         description="Explore contemporary artwork created to carry identity, emotion, and story."
       />
+
       <Navbar />
+
       <main className="home-page tboyarts-slide-in-left">
         {pageError ? (
           <ErrorState
@@ -39,27 +44,38 @@ export default function Home() {
           <>
             <Hero />
 
-            <FeaturedArtwork
-              onError={setPageError}
-            />
+            <ScrollReveal>
+              <HomeAdvertisement />
+            </ScrollReveal>
 
-            <BrowseCategories
-              onError={setPageError}
-            />
+            <ScrollReveal>
+              <FeaturedArtwork onError={setPageError} />
+            </ScrollReveal>
 
-            <NewArrivals
-              onError={setPageError}
-            />
+            <ScrollReveal>
+              <BrowseCategories onError={setPageError} />
+            </ScrollReveal>
 
-            <ArtistStory
-              onError={setPageError}
-            />
+            <ScrollReveal>
+              <div id="new-arrivals" className="scroll-mt-24">
+                <NewArrivals onError={setPageError} />
+              </div>
+            </ScrollReveal>
 
-            <HomeCTA />
+            <ScrollReveal>
+              <ArtistStory onError={setPageError} />
+            </ScrollReveal>
+
+            <ScrollReveal>
+              <HomeCTA />
+            </ScrollReveal>
           </>
         )}
       </main>
+
       <Footer />
+
+      <FeaturedAdvertisementModal />
     </>
   );
 }

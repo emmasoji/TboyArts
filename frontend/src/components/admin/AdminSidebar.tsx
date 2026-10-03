@@ -5,6 +5,7 @@ import {
   Users,
   UserRound,
   Home,
+  Megaphone,
   Settings,
   ChevronsLeft,
   Sun,
@@ -32,6 +33,7 @@ const navigation: {
   { id: "customers", label: "Customers", icon: Users },
   { id: "artist", label: "Artist", icon: UserRound },
   { id: "homepage", label: "Homepage", icon: Home },
+  { id: "ads", label: "Advertisements", icon: Megaphone },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 

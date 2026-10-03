@@ -8,7 +8,7 @@ import ArtworkCard from "../components/artwork/ArtworkCard";
 import ArtworkModal from "../components/artwork/ArtworkModal";
 import ImagePreviewModal from "../components/artwork/ImagePreviewModal";
 
-import { getArtworks } from "../services/artworkService";
+import { getCustomerArtworks } from "../services/artworkService";
 import type { Artwork as ServiceArtwork } from "../services/artworkService";
 
 import type { Artwork as CardArtwork } from "../types/artwork";
@@ -63,7 +63,7 @@ export default function Shop() {
       setLoading(true);
       setError("");
 
-      const data = await getArtworks();
+      const data = await getCustomerArtworks();
 
       setArtworks(data);
     } catch (err) {

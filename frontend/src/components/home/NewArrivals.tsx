@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import {
-  getArtworks,
+  getCustomerArtworks,
   type Artwork as SupabaseArtwork,
 } from "../../services/artworkService";
 import Skeleton from "../ui/Skeleton";
@@ -181,7 +181,7 @@ export default function NewArrivals({
         setLoading(true);
         setError("");
 
-        const data = await getArtworks();
+        const data = await getCustomerArtworks();
 
         if (!mounted) return;
 
@@ -372,12 +372,6 @@ export default function NewArrivals({
           <p className="home-eyebrow home-theme-muted">
             NEW ARRIVALS
           </p>
-
-          <h2 className="font-serif text-4xl leading-[0.95] home-theme-heading sm:text-5xl lg:text-6xl">
-            Fresh from
-            <br />
-            the studio.
-          </h2>
         </div>
 
         <Link

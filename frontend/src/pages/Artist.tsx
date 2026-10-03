@@ -9,7 +9,7 @@ import {
 } from "../services/artistService";
 
 import {
-  getArtworks,
+  getCustomerArtworks,
   type Artwork,
 } from "../services/artworkService";
 
@@ -59,7 +59,7 @@ export default function Artist() {
 
         const [profileData, artworkData] = await Promise.all([
           getArtistProfile(),
-          getArtworks(),
+          getCustomerArtworks(),
         ]);
 
         if (profileData) {

@@ -41,9 +41,8 @@ export const defaultFooterSettings: FooterSettings = {
   ],
 
   customer_links: [
-    { label: "New Arrivals", href: "/shop" },
+    { label: "New Arrivals", href: "/#new-arrivals" },
     { label: "Shopping Cart", href: "/cart" },
-    { label: "Track an Order", href: "#track-order" },
   ],
 
   contact_email: "hello@tboyarts.com",

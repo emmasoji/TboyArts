@@ -29,6 +29,7 @@ export interface ArtworkFormData {
   image: string;
   featured: boolean;
   status: string;
+  customer_visible: boolean;
 }
 
 interface ArtworkFormModalProps {
@@ -58,6 +59,7 @@ const emptyForm: ArtworkFormData = {
   image: "",
   featured: false,
   status: "available",
+  customer_visible: true,
 };
 
 export default function ArtworkFormModal({
@@ -1375,6 +1377,49 @@ export default function ArtworkFormModal({
                     />
 
                   </div>
+
+                  {/* CUSTOMER VISIBILITY */}
+
+                  <label className="
+                    flex
+                    cursor-pointer
+                    items-center
+                    justify-between
+                    rounded-2xl
+                    border
+                    border-white/10
+                    bg-white/[0.02]
+                    p-4
+                    transition
+                    hover:bg-white/[0.04]
+                  ">
+                    <div>
+                      <p className="text-sm font-medium">
+                        Visible to customers
+                      </p>
+
+                      <p className="
+                        mt-1
+                        text-xs
+                        text-white/30
+                      ">
+                        Show this artwork in the normal customer-facing collection.
+                        This does not control advertisement visibility.
+                      </p>
+                    </div>
+
+                    <input
+                      type="checkbox"
+                      checked={Boolean(form.customer_visible)}
+                      onChange={(event) =>
+                        updateField(
+                          "customer_visible",
+                          event.target.checked,
+                        )
+                      }
+                      className="h-5 w-5 accent-white"
+                    />
+                  </label>
 
                   {/* FEATURED */}
 

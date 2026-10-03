@@ -39,17 +39,12 @@ const navigation = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [navbarLoading, setNavbarLoading] = useState(true);
   const getLogoUrl = () =>
     `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/Logo/logo.png`;
 
   const [logoUrl, setLogoUrl] = useState(getLogoUrl);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setNavbarLoading(false);
-    }, 450);
-
     const handleLogoUpdate = () => {
       setLogoUrl(getLogoUrl());
     };
@@ -60,7 +55,6 @@ export default function Navbar() {
     );
 
     return () => {
-      window.clearTimeout(timer);
       window.removeEventListener(
         "tboyarts-logo-updated",
         handleLogoUpdate,
@@ -121,37 +115,7 @@ export default function Navbar() {
             : "border-white/10 bg-black/55 text-white",
         ].join(" ")}
       >
-        {navbarLoading && (
-          <div className="tboyarts-navbar-skeleton">
-            <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-2">
-                <div className="h-11 w-11 rounded-full bg-black/10 dark:bg-white/10 sm:h-12 sm:w-12" />
-                <div className="h-4 w-24 rounded-full bg-black/10 dark:bg-white/10" />
-              </div>
-
-              <div className="hidden items-center gap-8 lg:flex">
-                <div className="h-3 w-12 rounded-full bg-black/10 dark:bg-white/10" />
-                <div className="h-3 w-12 rounded-full bg-black/10 dark:bg-white/10" />
-                <div className="h-3 w-14 rounded-full bg-black/10 dark:bg-white/10" />
-                <div className="h-3 w-20 rounded-full bg-black/10 dark:bg-white/10" />
-              </div>
-
-              <div className="flex items-center gap-4 sm:gap-5">
-                <div className="h-10 w-10 rounded-full bg-black/10 dark:bg-white/10" />
-                <div className="h-10 w-10 rounded-full bg-black/10 dark:bg-white/10 lg:hidden" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div
-          className={[
-            "flex w-full items-center justify-between",
-            navbarLoading
-              ? "opacity-0"
-              : "tboyarts-navbar-content-in opacity-100",
-          ].join(" ")}
-        >
+        <div className="flex w-full items-center justify-between">
         {/* Brand */}
 
         <Link

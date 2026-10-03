@@ -305,6 +305,9 @@ export default function ArtworkTable() {
 
         status:
           data.status || "available",
+
+        customer_visible:
+          Boolean(data.customer_visible),
       });
 
       setShowAddModal(false);

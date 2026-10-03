@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import { useTrackOrder } from "../../contexts/TrackOrderContext";
+import { useCart } from "../../contexts/CartContext";
 import {
   defaultFooterSettings,
   getFooterSettings,
@@ -24,6 +25,7 @@ import {
 
 export default function Footer() {
   const { openTrackOrder } = useTrackOrder();
+  const { openCart } = useCart();
 
   const [settings, setSettings] =
     useState<FooterSettings>(
@@ -74,6 +76,26 @@ export default function Footer() {
   ) => {
     if (href === "#track-order") {
       openTrackOrder();
+      return;
+    }
+
+    if (href === "/cart") {
+      openCart();
+      return;
+    }
+
+    if (href === "/#new-arrivals") {
+      if (window.location.pathname === "/") {
+        document
+          .getElementById("new-arrivals")
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        return;
+      }
+
+      window.location.href = "/#new-arrivals";
     }
   };
 
@@ -165,7 +187,7 @@ export default function Footer() {
 
           {settings.explore_links.map(
             (link, index) =>
-              link.href === "#track-order" ? (
+              link.href === "#track-order" || link.href === "/cart" || link.href === "/#new-arrivals" ? (
                 <button
                   key={`explore-${index}`}
                   type="button"
@@ -195,7 +217,7 @@ export default function Footer() {
 
           {settings.customer_links.map(
             (link, index) =>
-              link.href === "#track-order" ? (
+              link.href === "#track-order" || link.href === "/cart" || link.href === "/#new-arrivals" ? (
                 <button
                   key={`customer-${index}`}
                   type="button"

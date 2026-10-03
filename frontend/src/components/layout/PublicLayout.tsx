@@ -9,6 +9,8 @@ import TrackOrderModal from "../tracking/TrackOrderModal";
 import { CartProvider } from "../../contexts/CartContext";
 import CartModal from "../cart/CartModal";
 import { useTrackOrder } from "../../contexts/TrackOrderContext";
+import { CookieConsentProvider } from "../../contexts/CookieConsentContext";
+import CookieConsent from "../cookies/CookieConsent";
 
 export default function PublicLayout() {
   const { pathname } = useLocation();
@@ -38,10 +40,13 @@ export default function PublicLayout() {
   ]);
 
   return (
-    <CartProvider>
-      <Outlet />
-      <TrackOrderModal />
-      <CartModal />
-    </CartProvider>
+    <CookieConsentProvider>
+      <CartProvider>
+        <Outlet />
+        <TrackOrderModal />
+        <CartModal />
+        <CookieConsent />
+      </CartProvider>
+    </CookieConsentProvider>
   );
 }
