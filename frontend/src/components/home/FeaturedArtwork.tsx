@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 
 import { useEffect, useState } from "react";
 import {
@@ -8,9 +9,7 @@ import {
 import { Link } from "react-router-dom";
 
 import Skeleton from "../ui/Skeleton";
-import ScrollRevealGroup from "../animations/ScrollRevealGroup";
-import ScrollRevealItem from "../animations/ScrollRevealItem";
-import { useCurrency } from "../../contexts/CurrencyContext";
+import PriceDisplay from "../common/PriceDisplay";
 
 import {
   getCustomerArtworks,
@@ -34,7 +33,6 @@ export default function FeaturedArtwork({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
-  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     let mounted = true;
@@ -363,7 +361,7 @@ export default function FeaturedArtwork({
 
                       <div className="featured-interactive-image-wrap">
 
-                        <img
+                        <ProtectedImage
                           src={artwork.image ?? ""}
                           alt={
                             artwork.title ??
@@ -376,59 +374,44 @@ export default function FeaturedArtwork({
                         <div className="featured-carousel-gradient" />
 
                         <div className="featured-carousel-info">
-                        <ScrollRevealGroup
-                          key={`${artwork.id}-${currentIndex}`}
-                          amount={0.05}
-                          className="contents"
-                        >
                           <div>
-                            <ScrollRevealItem y={18} duration={0.55}>
-                              <p className="featured-carousel-label">
-                                {artwork.category ?? "ORIGINAL WORK"}
-                              </p>
-                            </ScrollRevealItem>
+                            <p className="featured-carousel-label">
+                              {artwork.category ?? "ORIGINAL WORK"}
+                            </p>
 
-                            <ScrollRevealItem y={24} duration={0.7}>
-                              <h3>{artwork.title}</h3>
-                            </ScrollRevealItem>
+                            <h3>{artwork.title}</h3>
 
-                            <ScrollRevealItem y={20} duration={0.6}>
-                              <p className="featured-carousel-medium">
-                                {artwork.medium ?? "Original Artwork"}
-                              </p>
-                            </ScrollRevealItem>
+                            <p className="featured-carousel-medium">
+                              {artwork.medium ?? "Original Artwork"}
+                            </p>
                           </div>
 
-                          <ScrollRevealItem y={22} duration={0.7}>
-                            <div className="featured-carousel-bottom">
-                              <strong>
-                                {artwork.price === null
-                                  ? "Price unavailable"
-                                  : formatPrice(artwork.price)}
-                              </strong>
+                          <div className="featured-carousel-bottom">
+                            <strong>
+                              {artwork.price === null
+                                ? "Price unavailable"
+                                : <PriceDisplay amount={artwork.price} />}
+                            </strong>
 
-                              <button
-                                type="button"
-                                className="featured-details-button"
-                                onPointerDown={(event) =>
-                                  event.stopPropagation()
-                                }
-                                onClick={() =>
-                                  window.location.assign(
-                                    `/shop?artwork=${encodeURIComponent(
-                                      artwork.id,
-                                    )}`,
-                                  )
-                                }
-                              >
-                                <Eye size={18} />
-                                View Details
-                              </button>
-                            </div>
-                          </ScrollRevealItem>
-                        </ScrollRevealGroup>
-                      </div>
-
+                            <button
+                              type="button"
+                              className="featured-details-button"
+                              onPointerDown={(event) =>
+                                event.stopPropagation()
+                              }
+                              onClick={() =>
+                                window.location.assign(
+                                  `/shop?artwork=${encodeURIComponent(
+                                    artwork.id,
+                                  )}`,
+                                )
+                              }
+                            >
+                              <Eye size={18} />
+                              View Details
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
                     </article>

@@ -1,3 +1,4 @@
+import ProtectedImage from "../components/artwork/ProtectedImage";
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -227,7 +228,7 @@ export default function Artist() {
             }`}
           >
 
-            <img
+            <ProtectedImage
               src={heroImage}
               alt={
                 profile.name ||
@@ -312,7 +313,7 @@ export default function Artist() {
 
                     <div className="overflow-hidden rounded-[24px] bg-[var(--surface,#f5f5f5)] sm:rounded-[30px]">
 
-                      <img
+                      <ProtectedImage
                         src={artwork.image ?? ""}
                         alt={
                           artwork.title ??

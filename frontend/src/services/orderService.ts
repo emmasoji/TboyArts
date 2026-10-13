@@ -28,6 +28,18 @@ export interface Order {
   city: string | null;
   address: string | null;
 
+  shipping_provider: string | null;
+  shipping_quote_token: string | null;
+  shipping_courier_id: string | null;
+  shipping_courier_name: string | null;
+  shipping_service_code: string | null;
+  shipping_service_type: string | null;
+  shipping_delivery_eta: string | null;
+  shipping_pickup_eta: string | null;
+  shipping_quote_currency: string | null;
+  actual_courier_name: string | null;
+  actual_courier_service: string | null;
+
   subtotal: number | null;
   shipping: number | null;
   total: number | null;
@@ -85,6 +97,21 @@ function mapOrder(row: any): Order {
 
     city: row.city ?? null,
         address: row.address ?? null,
+
+    shipping_provider: row.shipping_provider ?? null,
+    shipping_quote_token: row.shipping_quote_token ?? null,
+    shipping_courier_id:
+      row.shipping_courier_id == null
+        ? null
+        : String(row.shipping_courier_id),
+    shipping_courier_name: row.shipping_courier_name ?? null,
+    shipping_service_code: row.shipping_service_code ?? null,
+    shipping_service_type: row.shipping_service_type ?? null,
+    shipping_delivery_eta: row.shipping_delivery_eta ?? null,
+    shipping_pickup_eta: row.shipping_pickup_eta ?? null,
+    shipping_quote_currency: row.shipping_quote_currency ?? null,
+    actual_courier_name: row.actual_courier_name ?? null,
+    actual_courier_service: row.actual_courier_service ?? null,
 
     subtotal:
       row.subtotal ?? null,

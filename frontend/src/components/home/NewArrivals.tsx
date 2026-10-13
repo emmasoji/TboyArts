@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
@@ -33,7 +34,7 @@ function ArtworkCard({
           className="group absolute inset-0 block"
           aria-label={`View ${artwork.title ?? "artwork"}`}
         >
-          <img
+          <ProtectedImage
             src={artwork.image ?? ""}
             alt={
               artwork.title ??

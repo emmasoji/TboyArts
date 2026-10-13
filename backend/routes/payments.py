@@ -46,7 +46,8 @@ async def initialize_payment(
         orders = await select(
             "orders",
             columns=(
-                "id,order_number,email,total,"
+                "id,order_number,email,total,country,currency,"
+                "payment_amount,payment_exchange_rate,"
                 "payment_status,payment_reference"
             ),
             filters={"id": payment_request.order_id},
@@ -81,9 +82,10 @@ async def initialize_payment(
                 ),
             )
 
-        total = float(
-            order.get("total") or 0
-        )
+        # Paystack payments are NGN-only. Always charge the
+        # authoritative NGN order total, never a display conversion.
+        payment_currency = "NGN"
+        total = float(order.get("total") or 0)
 
         if total <= 0:
             raise HTTPException(
@@ -143,9 +145,7 @@ async def initialize_payment(
                     exc,
                 )
 
-        amount_kobo = round(
-            total * 100
-        )
+        amount_kobo = round(total * 100)
 
         if existing_reference:
             payment_reference = existing_reference
@@ -195,6 +195,15 @@ async def initialize_payment(
                 detail="Unsupported payment method.",
             )
 
+        country = str(order.get("country") or "").strip().lower()
+        is_nigeria = country in {"nigeria", "ng"}
+
+        if not is_nigeria and selected_method != "card":
+            raise HTTPException(
+                status_code=400,
+                detail="Card payment is required for international orders.",
+            )
+
         payment = await initialize_transaction(
             email=order_email,
             amount=amount_kobo,
@@ -202,6 +211,7 @@ async def initialize_payment(
             channels=[
                 channel_map[selected_method]
             ],
+            currency=payment_currency,
         )
 
         reference = payment["reference"]
@@ -227,7 +237,7 @@ async def initialize_payment(
                 "access_code"
             ),
             "amount": amount_kobo,
-            "currency": "NGN",
+            "currency": payment_currency,
         }
 
     except HTTPException:

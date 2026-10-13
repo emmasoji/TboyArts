@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import {
   ChevronLeft,
   Minus,
@@ -8,13 +9,12 @@ import {
 import { useNavigate } from "react-router-dom";
 import { loadCheckout } from "../../loaders/checkoutLoader";
 import { useCart } from "../../contexts/CartContext";
-import { useCurrency } from "../../contexts/CurrencyContext";
+import PriceDisplay from "../common/PriceDisplay";
 import { useTheme } from "../../contexts/ThemeContext";
 
 
 export default function CartModal() {
   const { theme } = useTheme();
-  const { formatPrice } = useCurrency();
   const {
     items,
     cartOpen,
@@ -176,7 +176,7 @@ export default function CartModal() {
                         light ? "bg-neutral-100" : "bg-neutral-900",
                       ].join(" ")}
                     >
-                      <img
+                      <ProtectedImage
                         src={item.image}
                         alt={item.title}
                         className="h-full w-full object-cover"
@@ -268,7 +268,7 @@ export default function CartModal() {
                         {/* Price */}
 
                         <strong className="text-sm font-medium sm:text-base">
-                          {formatPrice(item.price * item.quantity)}
+                          <PriceDisplay amount={item.price * item.quantity} />
                         </strong>
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export default function CartModal() {
                 </span>
 
                 <strong className="text-xl font-medium">
-                  {formatPrice(subtotal)}
+                  <PriceDisplay amount={subtotal} />
                 </strong>
               </div>
 

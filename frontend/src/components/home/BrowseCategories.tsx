@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -169,7 +170,7 @@ export default function BrowseCategories({
               {/* IMAGE */}
 
               {category.image ? (
-                <img
+                <ProtectedImage
                   src={category.image}
                   alt={category.name}
     loading="lazy"

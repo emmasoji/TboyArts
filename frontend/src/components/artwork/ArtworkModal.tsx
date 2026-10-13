@@ -1,3 +1,4 @@
+import ProtectedImage from "./ProtectedImage";
 import {
   ChevronLeft,
   ShoppingBag,
@@ -8,7 +9,7 @@ import {
 import type { Artwork } from "../../types/artwork";
 import { isPurchasable } from "../../data/artworkUtils";
 import { useCart } from "../../contexts/CartContext";
-import { useCurrency } from "../../contexts/CurrencyContext";
+import PriceDisplay from "../common/PriceDisplay";
 import AddToCartAnimation from "../cart/AddToCartAnimation";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -50,7 +51,6 @@ export default function ArtworkModal({
 }: ArtworkModalProps) {
   const { theme } = useTheme();
   const { itemCount, openCart } = useCart();
-  const { formatPrice } = useCurrency();
 
   const light = theme === "light";
 
@@ -181,7 +181,7 @@ export default function ArtworkModal({
                 light ? "bg-neutral-100" : "bg-neutral-900",
               ].join(" ")}
             >
-              <img
+              <ProtectedImage
                 src={artwork.image}
                 alt={artwork.title}
                 className="max-h-[70vh] w-auto max-w-full object-contain sm:max-h-[75vh] lg:max-h-[calc(92vh-8rem)]"
@@ -336,7 +336,7 @@ export default function ArtworkModal({
                 </span>
 
                 <strong className="mt-2 block text-3xl font-medium tracking-tight sm:text-4xl">
-                  {formatPrice(artwork.price)}
+                  <PriceDisplay amount={artwork.price} />
                 </strong>
 
                 {purchasable ? (

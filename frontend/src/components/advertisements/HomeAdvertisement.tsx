@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -81,7 +82,7 @@ export default function HomeAdvertisement() {
             "Explore advertisement"
           }
         >
-          <img
+          <ProtectedImage
             src={advertisement.banner_image}
             alt={
               advertisement.title ||

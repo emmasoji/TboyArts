@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
@@ -87,7 +88,7 @@ export default function AddToCartAnimation() {
       className="tboyarts-add-to-cart-flight"
       style={style}
     >
-      <img
+      <ProtectedImage
         src={animation.image}
         alt=""
         className="h-full w-full rounded-full object-cover"

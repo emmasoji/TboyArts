@@ -4,10 +4,16 @@ from fastapi import (
     File,
     HTTPException,
     UploadFile,
+    Response,
 )
 
 from services.admin_auth_service import (
     require_authenticated_admin,
+)
+
+from services.freeconvert_service import (
+    FreeConvertError,
+    convert_image_to_webp,
 )
 
 from services.storage_service import (
@@ -47,6 +53,52 @@ async def storage_usage(
             "success": False,
             "message": str(exc),
         }
+
+
+# ============================================================
+# FREECONVERT IMAGE OPTIMIZATION
+# ============================================================
+
+@router.post("/convert-webp")
+async def convert_uploaded_image_to_webp(
+    file: UploadFile = File(...),
+    _user: dict = Depends(require_authenticated_admin),
+):
+    content_type = (file.content_type or "").lower()
+    if not content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Please upload an image file.")
+
+    data = await file.read()
+
+    try:
+        converted = await convert_image_to_webp(
+            data, file.filename or "image", content_type
+        )
+    except FreeConvertError as exc:
+        message = str(exc)
+        temporary = any(
+            phrase in message.lower()
+            for phrase in (
+                "not configured",
+                "temporarily unavailable",
+                "connect to freeconvert",
+                "rate or credit limit",
+            )
+        )
+        raise HTTPException(
+            status_code=503 if temporary else 400,
+            detail=message,
+        ) from exc
+
+    return Response(
+        content=converted,
+        media_type="image/webp",
+        headers={
+            "Content-Disposition": 'inline; filename="optimized.webp"',
+            "Cache-Control": "no-store",
+            "X-Converted-Format": "webp",
+        },
+    )
 
 
 # ============================================================

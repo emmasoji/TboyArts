@@ -1,4 +1,5 @@
-from typing import List, Optional
+from decimal import Decimal
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -21,6 +22,12 @@ class CartItemRequest(BaseModel):
 class CreateOrderRequest(BaseModel):
     customer: CustomerDetails
     items: List[CartItemRequest] = Field(min_length=1)
+    receiver_address_code: int = Field(gt=0)
+    shipping_courier_id: str = Field(min_length=1, max_length=100)
+    shipping_service_code: str = Field(min_length=1, max_length=100)
+    shipping_rate_amount: Decimal = Field(ge=0)
+    delivery_instructions: str = Field(default="", max_length=500)
+    payment_currency: Literal["NGN", "USD"] = "NGN"
 
 
 class OrderItem(BaseModel):
@@ -38,6 +45,9 @@ class OrderResponse(BaseModel):
     shipping: int = 0
     tax: int = 0
     currency: str = "NGN"
+    payment_amount: float = 0
+    payment_currency: str = "NGN"
+    payment_exchange_rate: float = 1
     customer: CustomerDetails
     items: List[OrderItem]
     status: str

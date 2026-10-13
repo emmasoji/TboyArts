@@ -12,6 +12,7 @@ import {
 } from "../../../../services/homepageService";
 import { supabase } from "../../../../lib/supabase";
 import API_URL from "../../../../config/api";
+import { convertImageWithFreeConvert, getImageFileExtension } from "../../../../utils/convertImageWithFreeConvert";
 import ErrorState from "../../../errors/ErrorState";
 
 export default function HeroManagement() {
@@ -124,9 +125,14 @@ export default function HeroManagement() {
         );
       }
 
+      const optimizedFile = await convertImageWithFreeConvert(
+        file,
+        accessToken,
+      );
+
       if (
         storageData.usedBytes >= storageData.limitBytes ||
-        storageData.usedBytes + file.size >
+        storageData.usedBytes + optimizedFile.size >
           storageData.limitBytes
       ) {
         throw new Error(
@@ -134,19 +140,17 @@ export default function HeroManagement() {
         );
       }
 
-      const fileExtension =
-        file.name.split(".").pop()?.toLowerCase() || "jpg";
-
-      const fileName = `hero-${Date.now()}.${fileExtension}`;
+      const fileName = `hero-${Date.now()}.${getImageFileExtension(optimizedFile)}`;
 
       const filePath = `hero/${fileName}`;
 
       const { error: uploadError } =
         await supabase.storage
           .from("homepage")
-          .upload(filePath, file, {
+          .upload(filePath, optimizedFile, {
             cacheControl: "2592000",
             upsert: true,
+            contentType: optimizedFile.type,
           });
 
       if (uploadError) {

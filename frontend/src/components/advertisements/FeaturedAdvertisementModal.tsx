@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
@@ -175,7 +176,7 @@ export default function FeaturedAdvertisementModal() {
                 "Explore advertisement"
               }
             >
-              <img
+              <ProtectedImage
                 src={advertisement.banner_image}
                 alt={
                   advertisement.title ||

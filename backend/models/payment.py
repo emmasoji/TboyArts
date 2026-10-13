@@ -11,6 +11,6 @@ class VerifyPaymentResponse(BaseModel):
     success: bool
     reference: str
     status: str
-    amount: int
+    amount: float
     currency: str
     message: str

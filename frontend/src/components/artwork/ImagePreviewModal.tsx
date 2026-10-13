@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 
 import type { Artwork } from "../../types/artwork";
+import ProtectedImage from "./ProtectedImage";
 
 interface ArtworkImageViewerProps {
   artwork: Artwork | null;
@@ -79,7 +80,7 @@ export default function ArtworkImageViewer({
         )}
 
         <div className="artwork-viewer-stage">
-          <img
+          <ProtectedImage
             src={artwork.image}
             alt={artwork.title}
             className="artwork-viewer-image"

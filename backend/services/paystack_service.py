@@ -30,12 +30,17 @@ async def initialize_transaction(
     reference: str,
     callback_url: str | None = None,
     channels: list[str] | None = None,
+    currency: str = "NGN",
 ) -> Dict[str, Any]:
+    currency = currency.upper().strip()
+    if currency not in {"NGN", "USD"}:
+        raise ValueError("Unsupported payment currency.")
+
     payload: Dict[str, Any] = {
         "email": email,
         "amount": amount,
         "reference": reference,
-        "currency": "NGN",
+        "currency": currency,
     }
 
     if callback_url:

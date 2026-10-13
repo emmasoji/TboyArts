@@ -24,14 +24,14 @@ function Detail({
   value: string;
 }) {
   return (
-    <div>
-      <p className="text-[11px] uppercase tracking-wider text-[var(--admin-text-faint)]">
+    <div className="flex items-start justify-between gap-4 py-2">
+      <span className="shrink-0 text-sm text-[var(--admin-text-faint)]">
         {label}
-      </p>
+      </span>
 
-      <p className="mt-1 break-words text-sm text-[var(--admin-text-muted)]">
+      <span className="break-words text-right text-sm text-[var(--admin-text)]">
         {value || "—"}
-      </p>
+      </span>
     </div>
   );
 }
@@ -77,7 +77,7 @@ function OrderDetailsSkeleton() {
       <section>
         <SkeletonBlock className="mb-5 h-3 w-20" />
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-1">
           <SkeletonBlock className="h-10 w-full" />
           <SkeletonBlock className="h-10 w-full" />
           <SkeletonBlock className="h-10 w-full" />
@@ -90,7 +90,7 @@ function OrderDetailsSkeleton() {
       <section className="border-t border-[var(--admin-border)] pt-7">
         <SkeletonBlock className="mb-5 h-3 w-20" />
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-1">
           <SkeletonBlock className="h-10 w-full" />
           <SkeletonBlock className="h-10 w-full" />
           <SkeletonBlock className="h-10 w-full" />
@@ -134,7 +134,7 @@ function OrderDetailsSkeleton() {
 
       {/* DATE */}
       <section className="border-t border-[var(--admin-border)] pt-7 pb-4">
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-1">
           <SkeletonBlock className="h-10 w-full" />
           <SkeletonBlock className="h-10 w-full" />
         </div>
@@ -428,7 +428,7 @@ export default function OrderDetailsModal({
                 Customer
               </p>
 
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1">
                 <Detail
                   label="Customer"
                   value={
@@ -472,7 +472,7 @@ export default function OrderDetailsModal({
                 Payment
               </p>
 
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
                 <Detail
                   label="Payment Method"
                   value={
@@ -501,6 +501,45 @@ export default function OrderDetailsModal({
                   }
                 />
               </div>
+            </section>
+
+            {/* SHIPPING */}
+            <section className="border-t border-[var(--admin-border)] pt-7">
+              <p className="mb-5 text-xs uppercase tracking-[0.2em] text-[var(--admin-text-faint)]">
+                Shipping
+              </p>
+
+              <p className="mb-4 text-sm font-medium text-[var(--admin-text)]">
+                Customer-selected shipping quote
+              </p>
+
+              <div className="space-y-1">
+                <Detail
+                  label="Quote Provider"
+                  value={order.shipping_provider ?? "—"}
+                />
+                <Detail
+                  label="Selected Courier"
+                  value={
+                    order.shipping_courier_name ||
+                    order.shipping_courier_id ||
+                    "—"
+                  }
+                />
+                <Detail
+                  label="Service Type"
+                  value={order.shipping_service_type ?? "—"}
+                />
+                <Detail
+                  label="Pickup ETA"
+                  value={order.shipping_pickup_eta ?? "—"}
+                />
+                <Detail
+                  label="Delivery ETA"
+                  value={order.shipping_delivery_eta ?? "—"}
+                />
+              </div>
+
             </section>
 
             {/* ORDER SUMMARY */}
@@ -563,7 +602,7 @@ export default function OrderDetailsModal({
 
             {/* DATE */}
             <section className="border-t border-[var(--admin-border)] pt-7 pb-4">
-              <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-1">
                 <Detail
                   label="Created"
                   value={new Date(

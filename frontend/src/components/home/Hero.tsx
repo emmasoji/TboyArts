@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
@@ -115,7 +116,7 @@ export default function Hero() {
       {/* HERO IMAGE */}
 
       {settings.heroImage && (
-        <img
+        <ProtectedImage
           src={settings.heroImage}
           alt="Original TboyArts artwork"
           className="home-hero-image"

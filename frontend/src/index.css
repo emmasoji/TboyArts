@@ -5685,3 +5685,110 @@ html[data-theme="dark"] .footer-logo {
     letter-spacing: -0.05em;
   }
 }
+
+/* TboyArts checkout loading overlay */
+.tboyarts-checkout-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(12, 12, 12, 0.96);
+  color: #f5f0e8;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: tboyarts-loader-fade-in 0.22s ease-out both;
+}
+
+.tboyarts-checkout-loader {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 142px;
+  height: 142px;
+  margin-bottom: 8px;
+}
+
+.tboyarts-checkout-loader-ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(213, 177, 124, 0.18);
+  border-top-color: #d5b17c;
+  border-right-color: rgba(213, 177, 124, 0.65);
+  border-radius: 50%;
+  animation: tboyarts-loader-spin 1.8s linear infinite;
+  box-shadow: 0 0 24px rgba(213, 177, 124, 0.08);
+}
+
+.tboyarts-checkout-loader-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 50%;
+  animation: tboyarts-loader-glow 2.4s ease-in-out infinite;
+}
+
+.tboyarts-checkout-loader-brand {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+}
+
+.tboyarts-checkout-loader-message {
+  margin: 0;
+  color: rgba(245, 240, 232, 0.68);
+  font-size: 13px;
+}
+
+.tboyarts-checkout-loader-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tboyarts-checkout-loader-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #d5b17c;
+  animation: tboyarts-loader-dot 1s ease-in-out infinite;
+}
+
+.tboyarts-checkout-loader-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.tboyarts-checkout-loader-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes tboyarts-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes tboyarts-loader-glow {
+  0%, 100% { opacity: 0.9; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes tboyarts-loader-dot {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+@keyframes tboyarts-loader-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tboyarts-checkout-loader-ring,
+  .tboyarts-checkout-loader-logo,
+  .tboyarts-checkout-loader-dots i {
+    animation: none;
+  }
+}

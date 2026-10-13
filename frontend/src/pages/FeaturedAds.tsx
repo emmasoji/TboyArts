@@ -1,3 +1,4 @@
+import ProtectedImage from "../components/artwork/ProtectedImage";
 import { FeaturedAdsRouteSkeleton } from "../components/ui/RouteLoadingFallback";
 import {
   ChevronLeft,
@@ -407,7 +408,7 @@ export default function FeaturedAds() {
                           }`}
                         >
                           {product.artwork.image ? (
-                            <img
+                            <ProtectedImage
                               src={
                                 product.artwork.image
                               }

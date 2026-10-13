@@ -13,6 +13,7 @@ interface CurrencyContextValue {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
   formatPrice: (ngnAmount: number) => string;
+  formatAmount: (ngnAmount: number, currency: Currency) => string;
 }
 
 const CURRENCY_STORAGE_KEY = "tboyarts-currency";
@@ -51,6 +52,10 @@ export function CurrencyProvider({
     return getSavedCurrency() ?? "NGN";
   });
 
+  const [hasManualCurrency, setHasManualCurrency] = useState(
+    () => getSavedCurrency() !== null,
+  );
+
   const [usdRate, setUsdRate] = useState<number | null>(() => {
     return getSavedRate();
   });
@@ -84,19 +89,47 @@ export function CurrencyProvider({
     void fetchRate();
   }, []);
 
+  useEffect(() => {
+    if (hasManualCurrency) return;
+
+    let active = true;
+
+    const detectCountry = async () => {
+      try {
+        const response = await fetch("https://ipapi.co/json/");
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        // Never replace a manual choice made while detection was running.
+        if (!active || getSavedCurrency() !== null) return;
+
+        setCurrencyState(
+          String(data?.country_code ?? "").toUpperCase() === "NG"
+            ? "NGN"
+            : "USD",
+        );
+      } catch {
+        // Keep the default NGN currency if detection is unavailable.
+      }
+    };
+
+    void detectCountry();
+
+    return () => {
+      active = false;
+    };
+  }, [hasManualCurrency]);
+
   const setCurrency = (nextCurrency: Currency) => {
+    setHasManualCurrency(true);
     setCurrencyState(nextCurrency);
-    localStorage.setItem(
-      CURRENCY_STORAGE_KEY,
-      nextCurrency,
-    );
+    localStorage.setItem(CURRENCY_STORAGE_KEY, nextCurrency);
   };
 
-  const formatPrice = (ngnAmount: number) => {
-    if (currency === "USD") {
-      if (usdRate === null) {
-        return "Price unavailable";
-      }
+  const formatAmount = (ngnAmount: number, targetCurrency: Currency) => {
+    if (targetCurrency === "USD") {
+      if (usdRate === null) return "Price unavailable";
 
       return new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -112,12 +145,17 @@ export function CurrencyProvider({
     }).format(ngnAmount);
   };
 
+  const formatPrice = (ngnAmount: number) => {
+    return formatAmount(ngnAmount, "NGN");
+  };
+
   return (
     <CurrencyContext.Provider
       value={{
         currency,
         setCurrency,
         formatPrice,
+        formatAmount,
       }}
     >
       {children}

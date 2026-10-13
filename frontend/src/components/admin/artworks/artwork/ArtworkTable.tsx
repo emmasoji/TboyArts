@@ -31,6 +31,7 @@ import ErrorState from "../../../errors/ErrorState";
 import { createPortal } from "react-dom";
 import { supabase } from "../../../../lib/supabase";
 import API_URL from "../../../../config/api";
+import { convertImageWithFreeConvert, getImageFileExtension } from "../../../../utils/convertImageWithFreeConvert";
 
 import type {
   ArtworkFormData,
@@ -204,9 +205,14 @@ export default function ArtworkTable() {
       );
     }
 
+    const optimizedFile = await convertImageWithFreeConvert(
+      imageFile,
+      accessToken,
+    );
+
     if (
       storageData.usedBytes >= storageData.limitBytes ||
-      storageData.usedBytes + imageFile.size >
+      storageData.usedBytes + optimizedFile.size >
         storageData.limitBytes
     ) {
       throw new Error(
@@ -214,11 +220,7 @@ export default function ArtworkTable() {
       );
     }
 
-    const extension =
-      imageFile.name
-        .split(".")
-        .pop()
-        ?.toLowerCase() || "jpg";
+    const extension = getImageFileExtension(optimizedFile);
 
     const filePath =
       `artwork-${crypto.randomUUID()}.${extension}`;
@@ -229,11 +231,11 @@ export default function ArtworkTable() {
       .from("artworks")
       .upload(
         filePath,
-        imageFile,
+        optimizedFile,
         {
           cacheControl: "2592000",
           upsert: false,
-          contentType: imageFile.type,
+          contentType: optimizedFile.type,
         },
       );
 

@@ -9,6 +9,7 @@ import {
 
 import { supabase } from "../../../../lib/supabase";
 import API_URL from "../../../../config/api";
+import { convertImageWithFreeConvert, getImageFileExtension } from "../../../../utils/convertImageWithFreeConvert";
 import ErrorState from "../../../errors/ErrorState";
 
 interface Category {
@@ -143,9 +144,14 @@ export default function BrowseCategoriesManagement() {
         );
       }
 
+      const optimizedFile = await convertImageWithFreeConvert(
+        file,
+        accessToken,
+      );
+
       if (
         storageData.usedBytes >= storageData.limitBytes ||
-        storageData.usedBytes + file.size >
+        storageData.usedBytes + optimizedFile.size >
           storageData.limitBytes
       ) {
         throw new Error(
@@ -153,18 +159,16 @@ export default function BrowseCategoriesManagement() {
         );
       }
 
-      const extension =
-        file.name.split(".").pop()?.toLowerCase() ||
-        "jpg";
-
-      const filePath = `categories/${category.id}-${Date.now()}.${extension}`;
+      const filePath =
+        `categories/${category.id}-${Date.now()}.${getImageFileExtension(optimizedFile)}`;
 
       const { error: uploadError } =
         await supabase.storage
           .from("categories")
-          .upload(filePath, file, {
+          .upload(filePath, optimizedFile, {
             upsert: true,
             cacheControl: "2592000",
+            contentType: optimizedFile.type,
           });
 
       if (uploadError) {

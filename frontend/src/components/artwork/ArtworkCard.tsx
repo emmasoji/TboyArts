@@ -1,7 +1,8 @@
 import { ArrowUpRight, ShoppingBag } from "lucide-react";
 import type { Artwork } from "../../types/artwork";
-import { useCurrency } from "../../contexts/CurrencyContext";
+import PriceDisplay from "../common/PriceDisplay";
 import { isPurchasable } from "../../data/artworkUtils";
+import ProtectedImage from "./ProtectedImage";
 
 
 interface ArtworkCardProps {
@@ -19,7 +20,6 @@ export default function ArtworkCard({
   onSelect,
   onImageSelect,
 }: ArtworkCardProps) {
-  const { formatPrice } = useCurrency();
   const purchasable = isPurchasable(artwork);
 
   return (
@@ -38,7 +38,7 @@ export default function ArtworkCard({
       >
         <div className="artwork-card-image-wrapper">
 
-          <img
+          <ProtectedImage
             src={artwork.image ?? ""}
             alt={artwork.title}
             className="artwork-card-image"
@@ -104,7 +104,7 @@ export default function ArtworkCard({
 
           {purchasable ? (
             <span className="artwork-price">
-              {formatPrice(artwork.price)}
+              <PriceDisplay amount={artwork.price} />
             </span>
           ) : (
             <span className="artwork-unavailable">

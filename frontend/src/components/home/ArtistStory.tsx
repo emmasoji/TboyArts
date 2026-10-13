@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -136,7 +137,7 @@ export default function ArtistStory({
                 className="!bg-white/[0.06]"
               />
             ) : (
-              <img
+              <ProtectedImage
                 src={artistImage}
                 alt="TboyArts artist"
                 className="h-full w-full object-cover"

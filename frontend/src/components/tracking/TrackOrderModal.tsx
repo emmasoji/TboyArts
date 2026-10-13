@@ -1,3 +1,4 @@
+import ProtectedImage from "../artwork/ProtectedImage";
 import API_URL from "../../config/api";
 
 import { useEffect, useState } from "react";
@@ -18,7 +19,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 
 import { useTrackOrder } from "../../contexts/TrackOrderContext";
-import { useCurrency } from "../../contexts/CurrencyContext";
+import PriceDisplay from "../common/PriceDisplay";
 
 type TrackingItem = {
   artwork_id: string;
@@ -34,6 +35,7 @@ type TrackingOrder = {
   email: string | null;
   total: number | null;
   payment_status: string | null;
+  shipping_courier_name: string | null;
   status: string;
   created_at: string | null;
   updated_at: string | null;
@@ -145,7 +147,6 @@ function getTimeline(status: string) {
 }
 
 export default function TrackOrderModal() {
-  const { formatPrice } = useCurrency();
   const {
     isTrackOrderOpen,
     closeTrackOrder,
@@ -559,6 +560,21 @@ export default function TrackOrderModal() {
                       </div>
                     </div>
 
+                    {/* SELECTED SHIPPING COURIER */}
+                    <div className="tracking-payment">
+                      <div className="tracking-payment-icon">
+                        <Truck size={18} />
+                      </div>
+
+                      <div>
+                        <span>Shipping courier</span>
+                        <strong>
+                          {order.shipping_courier_name ||
+                            "Courier details unavailable"}
+                        </strong>
+                      </div>
+                    </div>
+
                     {/* ARTWORK */}
 
                     {order.items.length > 0 && (
@@ -577,7 +593,7 @@ export default function TrackOrderModal() {
                                 }
                               >
                                 {item.image ? (
-                                  <img
+                                  <ProtectedImage
                                     src={item.image}
                                     alt={
                                       item.title ||
@@ -611,7 +627,7 @@ export default function TrackOrderModal() {
                       <strong>
                         {order.total === null
                             ? "Price unavailable"
-                            : formatPrice(order.total)}
+                            : <PriceDisplay amount={order.total} />}
                       </strong>
                     </div>
 

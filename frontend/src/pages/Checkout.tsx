@@ -1,5 +1,6 @@
+import ProtectedImage from "../components/artwork/ProtectedImage";
 import { CheckoutRouteSkeleton } from "../components/ui/RouteLoadingFallback";
-;import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getCitiesOfState,
   getCountries,
@@ -31,18 +32,23 @@ import {
   MapPin,
   Search,
   ShoppingBag,
-  X,
-} from "lucide-react";
+  Truck,
+  X,} from "lucide-react";
+
 
 import { useCart } from "../contexts/CartContext";
 import { useCurrency } from "../contexts/CurrencyContext";
+import PriceDisplay from "../components/common/PriceDisplay";
 import {
   createOrder,
+  validateShippingAddress,
+  fetchShippingRates,
   initializePayment,
   verifyPayment,
   getCheckoutOrder,
   cancelPendingOrder,
   type CustomerDetails,
+  type ShippingCourier,
   type CreateOrderResponse,
 } from "../services/checkoutService";
 
@@ -62,12 +68,13 @@ const PENDING_ORDER_STORAGE_KEY = "tboyarts-pending-checkout-order";
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, clearCart } = useCart();
-  const { formatPrice } = useCurrency();
+  const { formatAmount } = useCurrency();
 
   const [step, setStep] = useState<CheckoutStep>("details");
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<"card" | "transfer" | "bank" | "ussd" | null>(null);
+
 
   const [customer, setCustomer] = useState<CustomerDetails>({
     full_name: "",
@@ -79,12 +86,27 @@ export default function Checkout() {
     country: "Nigeria",
   });
 
+  const isNigeria = ["nigeria", "ng"].includes(
+    customer.country.trim().toLowerCase(),
+  );
+  const cardOnly = !isNigeria;
+
+  useEffect(() => {
+    if (cardOnly && selectedPaymentMethod !== "card") {
+      setSelectedPaymentMethod("card");
+    }
+  }, [cardOnly, selectedPaymentMethod]);
+
   const [detectedCountryCode, setDetectedCountryCode] =
     useState<CountryCode | null>(null);
   const [countryDetectionLoading, setCountryDetectionLoading] =
     useState(false);
 
   const [order, setOrder] = useState<CreateOrderResponse | null>(null);
+  const [receiverAddressCode, setReceiverAddressCode] = useState<number | null>(null);
+  const [shippingCouriers, setShippingCouriers] = useState<ShippingCourier[]>([]);
+  const [selectedCourierKey, setSelectedCourierKey] = useState("");
+  const [shippingLoading, setShippingLoading] = useState(false);
   const [paidOrder, setPaidOrder] = useState<PaidOrder | null>(null);
 
   const [pendingOrder, setPendingOrder] = useState<{
@@ -116,7 +138,7 @@ export default function Checkout() {
 
   const currentStepHeading = {
     details: { title: "Customer Details" },
-    preview: { title: "Preview" },
+    preview: { title: "Order Summary" },
     payment: { title: "Payment" },
     verifying: { title: "Verifying Payment" },
     verified: { title: "Payment Verified" },
@@ -683,7 +705,42 @@ export default function Checkout() {
     }
 
     setError("");
-    setStep("preview");
+    setShippingLoading(true);
+    setShippingCouriers([]);
+    setSelectedCourierKey("");
+    setReceiverAddressCode(null);
+
+    try {
+      const address = await validateShippingAddress(customer);
+      const quotes = await fetchShippingRates(
+        items.map((item) => item.id),
+        address.address_code,
+      );
+
+      const ngnCouriers = (quotes.couriers || []).filter(
+        (courier) =>
+          String(courier.currency || "").toUpperCase() === "NGN" &&
+          Number.isFinite(Number(courier.rate_card_amount)) &&
+          Number(courier.rate_card_amount) >= 0 &&
+          Boolean(courier.courier_id) &&
+          Boolean(courier.service_code),
+      );
+
+      if (!ngnCouriers.length) {
+        throw new Error("No valid NGN shipping services are available for this address. Please check the address and try again.");
+      }
+
+      setReceiverAddressCode(address.address_code);
+      setShippingCouriers(ngnCouriers);
+      setSelectedCourierKey(
+        `${ngnCouriers[0].courier_id}::${ngnCouriers[0].service_code}`,
+      );
+      setStep("preview");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to fetch shipping rates.");
+    } finally {
+      setShippingLoading(false);
+    }
   }
 
   async function handlePayment(paymentOrder = order) {
@@ -694,6 +751,11 @@ export default function Checkout() {
 
     if (!selectedPaymentMethod) {
       setError("Please select a payment method.");
+      return;
+    }
+
+    if (cardOnly && selectedPaymentMethod !== "card") {
+      setError("Only card payments are available for this destination and currency.");
       return;
     }
 
@@ -860,11 +922,7 @@ export default function Checkout() {
           description="Your TboyArts payment is being securely verified."
           noIndex
         />
-        <TboyArtsProcessing
-        title="Verifying Payment"
-        message="Your payment has been received. Please wait while we securely confirm your payment."
-        detail="Confirming your payment..."
-      />
+        <TboyArtsProcessing />
     </>
     );
   }
@@ -905,7 +963,7 @@ export default function Checkout() {
                     Paid
                   </p>
                   <p className="mt-1 font-semibold text-green-600">
-                    {formatPrice(paidOrder.order.amount)}
+                    <PriceDisplay amount={paidOrder.order.amount} />
                   </p>
                 </div>
               </div>
@@ -927,7 +985,7 @@ export default function Checkout() {
                   </div>
 
                   <p className="font-medium">
-                    {formatPrice(item.subtotal)}
+                    <PriceDisplay amount={item.subtotal} />
                   </p>
                 </div>
               ))}
@@ -938,12 +996,12 @@ export default function Checkout() {
                 <div className="flex items-center justify-between">
                   <span className="opacity-60">Subtotal</span>
                   <span>
-                    {formatPrice(
-                      paidOrder.order.items.reduce(
+                    <PriceDisplay
+                      amount={paidOrder.order.items.reduce(
                         (sum, item) => sum + item.subtotal,
                         0,
-                      ),
-                    )}
+                      )}
+                    />
                   </span>
                 </div>
 
@@ -951,19 +1009,19 @@ export default function Checkout() {
                   <span className="opacity-60">Shipping</span>
                   <span>
                     {paidOrder.order.shipping > 0
-                      ? formatPrice(paidOrder.order.shipping)
+                      ? <PriceDisplay amount={paidOrder.order.shipping} />
                       : "Free"}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <span className="opacity-60">Tax</span>
-                  <span>{formatPrice(paidOrder.order.tax)}</span>
+                  <span><PriceDisplay amount={paidOrder.order.tax} /></span>
                 </div>
 
                 <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-4 text-base font-semibold">
                   <span>Total</span>
-                  <span>{formatPrice(paidOrder.order.amount)}</span>
+                  <span><PriceDisplay amount={paidOrder.order.amount} /></span>
                 </div>
               </div>
             </div>
@@ -984,6 +1042,10 @@ export default function Checkout() {
 
   return (
     <>
+      {shippingLoading && (
+        <TboyArtsProcessing />
+      )}
+
       <SEO
         title="Checkout — TboyArts"
         description="Complete your TboyArts artwork order securely."
@@ -991,11 +1053,7 @@ export default function Checkout() {
       />
 
       {paymentPreparing && (
-        <TboyArtsProcessing
-          title="Preparing payment environment"
-          message="Please wait while we securely prepare your payment."
-          detail="Connecting to secure payment..."
-        />
+        <TboyArtsProcessing />
       )}
 
       {pendingOrder && (
@@ -1362,9 +1420,10 @@ export default function Checkout() {
                 <button
                   type="button"
                   onClick={handleDetailsSubmit}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--text-primary)] px-7 py-3.5 text-sm font-medium text-[var(--bg-primary)] shadow-lg transition hover:scale-[1.02] hover:opacity-90"
+                  disabled={shippingLoading}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--text-primary)] px-7 py-3.5 text-sm font-medium text-[var(--bg-primary)] shadow-lg transition hover:scale-[1.02] hover:opacity-90 disabled:opacity-50"
                 >
-                  Continue to Preview
+                  {shippingLoading ? "Getting shipping rates…" : "Continue to Preview"}
                   <ChevronRight size={17} />
                 </button>
               </div>
@@ -1380,11 +1439,11 @@ export default function Checkout() {
                 <div className="mb-6 flex items-center gap-3">
                   <MapPin size={20} />
                   <h2 className="text-xl font-semibold">
-                    Delivery Information
+                    Delivery Details
                   </h2>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 text-sm">
+                <div className="space-y-1 text-sm">
                   <Info label="Name" value={customer.full_name} />
                   <Info label="Email" value={customer.email} />
                   <Info label="Phone" value={customer.phone} />
@@ -1405,11 +1464,58 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="rounded-3xl bg-[var(--bg-secondary)] p-6 md:p-8">
+              <div className="w-full min-w-0 rounded-3xl bg-[var(--bg-secondary)] p-6 md:p-8">
+                  <div className="mb-6 flex items-center gap-3">
+          <Truck size={20} />
+          <h2 className="text-xl font-semibold">Shipping Fee</h2>
+        </div>
+                  <div className="mt-4 w-full space-y-3">
+                    {shippingCouriers.map((courier) => {
+                      const key = `${courier.courier_id}::${courier.service_code}`;
+                      const chosen = key === selectedCourierKey;
+                      return (
+                        <label
+                          key={key}
+                          className={`flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
+                            chosen
+                              ? "border-[var(--text-primary)] bg-[var(--text-primary)]/[0.05]"
+                              : "border-[var(--border-color)]"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="shipping-service"
+                            value={key}
+                            checked={chosen}
+                            onChange={() => setSelectedCourierKey(key)}
+                            className="mt-1 accent-[var(--text-primary)]"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">{courier.courier_name}</span>
+                            <span className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm opacity-60">
+                  <span>{courier.service_type || courier.service_code}</span>
+                  {courier.delivery_eta && (
+                    <span>Delivery: {courier.delivery_eta}</span>
+                  )}
+                  {courier.pickup_eta && (
+                    <span>Pickup: {courier.pickup_eta}</span>
+                  )}
+                </span>
+                          </span>
+                          <span className="shrink-0 font-semibold">
+                            <PriceDisplay amount={Number(courier.rate_card_amount)} />
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl bg-[var(--bg-secondary)] p-6 md:p-8">
                 <div className="mb-6 flex items-center gap-3">
                   <ShoppingBag size={20} />
                   <h2 className="text-xl font-semibold">
-                    Your Artwork
+                    Total Summary
                   </h2>
                 </div>
 
@@ -1419,7 +1525,7 @@ export default function Checkout() {
                       key={item.id}
                       className="flex gap-4 rounded-2xl border border-[var(--border-color)] p-4"
                     >
-                      <img
+                      <ProtectedImage
                         src={item.image}
                         alt={item.title}
             decoding="async"
@@ -1436,27 +1542,27 @@ export default function Checkout() {
                         </p>
 
                         <p className="mt-2 font-medium">
-                          {formatPrice(
-                            Number(item.price) * item.quantity,
-                          )}
+                          <PriceDisplay amount={Number(item.price) * item.quantity} />
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
+
+
                 <div className="mt-6 border-t border-[var(--border-color)] pt-5">
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="opacity-60">Subtotal</span>
                       <span>
-                        {formatPrice(
-                          items.reduce(
+                        <PriceDisplay
+                          amount={items.reduce(
                             (sum, item) =>
                               sum + Number(item.price) * item.quantity,
                             0,
-                          ),
-                        )}
+                          )}
+                        />
                       </span>
                     </div>
 
@@ -1464,46 +1570,57 @@ export default function Checkout() {
                       <span className="opacity-60">Shipping</span>
                       <span>
                         {(() => {
-                          const shipping = items.reduce(
-                            (sum, item) =>
-                              sum + Number(item.shipping_fee || 0),
-                            0,
+                          const selected = shippingCouriers.find(
+                            (courier) =>
+                              `${courier.courier_id}::${courier.service_code}` === selectedCourierKey,
                           );
-
-                          return shipping > 0
-                            ? formatPrice(shipping)
-                            : "Free";
+                          return selected
+                            ? <PriceDisplay amount={Number(selected.rate_card_amount)} />
+                            : "Select a service";
                         })()}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="opacity-60">Tax</span>
-                      <span>{formatPrice(0)}</span>
+                      <span><PriceDisplay amount={0} /></span>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-4 text-base font-semibold">
                       <span>Total</span>
                       <span>
-                        {formatPrice(
-                          items.reduce(
-                            (sum, item) =>
-                              sum +
-                              Number(item.price) * item.quantity +
-                              Number(item.shipping_fee || 0),
-                            0,
-                          ),
-                        )}
+                        <PriceDisplay
+                          amount={
+                            items.reduce(
+                              (sum, item) =>
+                                sum + Number(item.price) * item.quantity,
+                              0,
+                            ) +
+                            Number(
+                              shippingCouriers.find(
+                                (courier) =>
+                                  `${courier.courier_id}::${courier.service_code}` === selectedCourierKey,
+                              )?.rate_card_amount || 0,
+                            )
+                          }
+                        />
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end">
+                <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setStep("payment")}
+                  onClick={() => {
+                    if (receiverAddressCode === null || !selectedCourierKey) {
+                      setError("Please select a valid shipping service before continuing.");
+                      return;
+                    }
+                    setError("");
+                    setStep("payment");
+                  }}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--text-primary)] px-7 py-3.5 text-sm font-medium text-[var(--bg-primary)] shadow-lg transition hover:scale-[1.02] hover:opacity-90"
                 >
                   Select Payment Method
@@ -1527,6 +1644,40 @@ export default function Checkout() {
                   Select your preferred way to pay for your artwork.
                 </p>
               </div>
+
+              <div className="mb-8 py-2">
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="pt-1 text-sm opacity-70">Payment Total</span>
+                      <div className="flex min-w-0 flex-col items-end gap-2">
+                        <strong className="text-xl font-semibold tabular-nums">
+                          {formatAmount(
+                            order
+                              ? Number(order.amount)
+                              : items.reduce(
+                                  (sum, item) =>
+                                    sum + Number(item.price) * item.quantity,
+                                  0,
+                                ) +
+                                  Number(
+                                    shippingCouriers.find(
+                                      (courier) =>
+                                        `${courier.courier_id}::${courier.service_code}` ===
+                                        selectedCourierKey,
+                                    )?.rate_card_amount || 0,
+                                  ),
+                            "NGN",
+                          )}
+                        </strong>
+
+                      </div>
+                    </div>
+                  </div>
+
+                  {cardOnly && (
+                <p className="mb-4 rounded-xl border border-[var(--border-color)] p-4 text-sm leading-6 opacity-75">
+                  Only card payments are available for international orders.
+                </p>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 {[
@@ -1554,7 +1705,9 @@ export default function Checkout() {
                     description: "Use your bank's USSD code to make payment.",
                     icon: Hash,
                   },
-                ].map((method) => {
+                ]
+                  .filter((method) => !cardOnly || method.id === "card")
+                  .map((method) => {
                   const Icon = method.icon;
                   const selected = selectedPaymentMethod === method.id;
 
@@ -1621,6 +1774,10 @@ export default function Checkout() {
                     if (!selectedPaymentMethod) {
                       return;
                     }
+                    if (cardOnly && selectedPaymentMethod !== "card") {
+                      setError("Only card payments are available for this destination and currency.");
+                      return;
+                    }
 
                     /*
                      * Show the TboyArts processing experience immediately.
@@ -1638,9 +1795,24 @@ export default function Checkout() {
                       setLoading(true);
 
                       try {
+                        const selectedCourier = shippingCouriers.find(
+                          (courier) =>
+                            `${courier.courier_id}::${courier.service_code}` === selectedCourierKey,
+                        );
+
+                        if (receiverAddressCode === null || !selectedCourier) {
+                          throw new Error("Please return to the preview and select a shipping service.");
+                        }
+
                         const createdOrder = await createOrder(
                           customer,
                           items,
+                          {
+                            receiver_address_code: receiverAddressCode,
+                            shipping_courier_id: selectedCourier.courier_id,
+                            shipping_service_code: selectedCourier.service_code,
+                            shipping_rate_amount: Number(selectedCourier.rate_card_amount),
+                          },
                         );
 
                         setOrder(createdOrder);
@@ -1690,17 +1862,9 @@ export default function Checkout() {
   );
 }
 
-function TboyArtsProcessing({
-  title,
-  message,
-  detail,
-}: {
-  title: string;
-  message: string;
-  detail: string;
-}) {
+function TboyArtsProcessing() {
   return (
-    <main className="fixed inset-0 z-[10000] flex min-h-screen items-center justify-center overflow-hidden bg-black/70 px-4 py-8 text-white backdrop-blur-2xl">
+    <main className="fixed inset-0 z-[10000] flex min-h-screen items-center justify-center overflow-hidden bg-[var(--bg-primary)] px-4 py-8 text-[var(--text-primary)] backdrop-blur-2xl">
       <style>
         {`
           @keyframes tboyarts-icon-boom {
@@ -1813,7 +1977,7 @@ function TboyArtsProcessing({
         `}
       </style>
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.035] via-transparent to-black/20" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--text-primary)]/[0.035] via-transparent to-[var(--text-primary)]/[0.06]" />
 
       <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center">
         <div className="relative mb-9 flex h-36 w-36 items-center justify-center">
@@ -1824,23 +1988,6 @@ function TboyArtsProcessing({
           />
         </div>
 
-        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-          {title}
-        </h1>
-
-        <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-white/60 md:text-base">
-          {message}
-        </p>
-
-        <div className="mt-8 flex items-center justify-center gap-2 text-sm text-white/45">
-          <span>{detail}</span>
-
-          <span className="flex items-center gap-1">
-            <span className="tboyarts-processing-dot">.</span>
-            <span className="tboyarts-processing-dot">.</span>
-            <span className="tboyarts-processing-dot">.</span>
-          </span>
-        </div>
       </div>
     </main>
   );
@@ -2055,11 +2202,13 @@ function Info({
   value: string;
 }) {
   return (
-    <div>
-      <p className="text-xs uppercase tracking-wider opacity-40">
+    <div className="grid grid-cols-[100px_minmax(0,1fr)] items-start gap-3 py-3">
+      <p className="text-xs uppercase tracking-wider opacity-50">
         {label}
       </p>
-      <p className="mt-1 break-words">{value}</p>
+      <p className="min-w-0 break-words text-right text-sm font-medium">
+        {value}
+      </p>
     </div>
   );
 }

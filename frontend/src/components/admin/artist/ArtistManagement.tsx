@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import API_URL from "../../../config/api";
+import { convertImageWithFreeConvert, getImageFileExtension } from "../../../utils/convertImageWithFreeConvert";
 import ErrorState from "../../errors/ErrorState";
 
 import {
@@ -169,9 +170,14 @@ export default function ArtistManagement() {
       );
     }
 
+    const optimizedImage = await convertImageWithFreeConvert(
+      imageFile,
+      accessToken,
+    );
+
     if (
       storageData.usedBytes >= storageData.limitBytes ||
-      storageData.usedBytes + imageFile.size >
+      storageData.usedBytes + optimizedImage.size >
         storageData.limitBytes
     ) {
       throw new Error(
@@ -179,19 +185,16 @@ export default function ArtistManagement() {
       );
     }
 
-    const extension =
-      imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
-
     const filePath =
-      `profile/artist-${Date.now()}.${extension}`;
+      `profile/artist-${Date.now()}.${getImageFileExtension(optimizedImage)}`;
 
     const { error: uploadError } =
       await supabase.storage
         .from(STORAGE_BUCKET)
-        .upload(filePath, imageFile, {
+        .upload(filePath, optimizedImage, {
           cacheControl: "2592000",
           upsert: false,
-          contentType: imageFile.type,
+          contentType: optimizedImage.type,
         });
 
     if (uploadError) {

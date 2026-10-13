@@ -406,27 +406,116 @@ export async function updateAdvertisement(
 }
 
 /**
- * Delete an advertisement.
+ * Remove an advertisement banner only when no advertisement
+ * still references it. Never remove artwork image files.
+ */
+async function removeAdvertisementBannerIfUnused(
+  imageUrl: string,
+): Promise<boolean> {
+  const marker = "/storage/v1/object/public/artworks/";
+  const markerIndex = imageUrl.indexOf(marker);
+
+  // Do not touch external URLs or unrecognized paths.
+  if (markerIndex === -1) {
+    return true;
+  }
+
+  let filePath: string;
+
+  try {
+    filePath = decodeURIComponent(
+      imageUrl.slice(markerIndex + marker.length),
+    );
+  } catch {
+    return false;
+  }
+
+  // Allow only a uniquely named advertisement banner file.
+  if (
+    filePath.includes("/") ||
+    !/^advertisement-[a-z0-9-]+\.[a-z0-9]+$/i.test(filePath)
+  ) {
+    return true;
+  }
+
+  // Protect a banner still referenced by another advertisement.
+  const { data: references, error: referenceError } = await supabase
+    .from("advertisements")
+    .select("id")
+    .eq("banner_image", imageUrl)
+    .limit(1);
+
+  if (referenceError) {
+    console.error(
+      "Could not verify advertisement banner references:",
+      referenceError,
+    );
+    return false;
+  }
+
+  if (references && references.length > 0) {
+    return true;
+  }
+
+  const { error: storageError } = await supabase.storage
+    .from("artworks")
+    .remove([filePath]);
+
+  if (storageError) {
+    console.error(
+      "Advertisement was deleted, but banner cleanup failed:",
+      storageError,
+    );
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Delete an advertisement and clean up its banner when safe.
  *
- * advertisement_products are removed automatically
- * by the database ON DELETE CASCADE constraint.
+ * Linked advertisement_products rows rely on the database
+ * ON DELETE CASCADE constraint.
  */
 export async function deleteAdvertisement(
   id: string,
-): Promise<void> {
+): Promise<boolean> {
   if (!id) {
-    throw new Error(
-      "Advertisement ID is missing.",
-    );
+    throw new Error("Advertisement ID is missing.");
   }
 
-  const { error } = await supabase
+  const { data: advertisement, error: lookupError } = await supabase
+    .from("advertisements")
+    .select("banner_image")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw lookupError;
+  }
+
+  const { error: deleteError } = await supabase
     .from("advertisements")
     .delete()
     .eq("id", id);
 
-  if (error) {
-    throw error;
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  if (!advertisement?.banner_image) {
+    return true;
+  }
+
+  // The database deletion succeeded; false indicates cleanup trouble.
+  try {
+    return await removeAdvertisementBannerIfUnused(
+      advertisement.banner_image,
+    );
+  } catch (error) {
+    console.error("Advertisement banner cleanup failed:", error);
+    return false;
   }
 }
 

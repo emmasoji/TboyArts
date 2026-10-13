@@ -9,6 +9,38 @@ RATE_CACHE_TTL = 15 * 60
 _rate_cache: dict[str, object] | None = None
 
 
+async def get_ngn_to_usd_rate() -> tuple[float, str | None]:
+    """Return USD per NGN using the existing cached CBN exchange-rate source."""
+    global _rate_cache
+    now = time.monotonic()
+
+    if _rate_cache is not None:
+        cached_at = _rate_cache.get("cached_at")
+        if isinstance(cached_at, float) and now - cached_at < RATE_CACHE_TTL:
+            return float(_rate_cache["rate"]), _rate_cache.get("date")
+
+    url = "https://api.frankfurter.dev/v2/providers/cbn/rate/ngn/usd"
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url)
+        if response.status_code >= 400:
+            raise HTTPException(502, detail="Unable to retrieve exchange rate.")
+
+        data = response.json()
+        rate = data.get("rate")
+        if not isinstance(rate, (int, float)) or rate <= 0:
+            raise HTTPException(502, detail="Invalid exchange rate received.")
+
+        exchange_date = data.get("date")
+        _rate_cache = {"rate": rate, "date": exchange_date, "cached_at": now}
+        return float(rate), exchange_date
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print("CURRENCY RATE ERROR:", exc)
+        raise HTTPException(502, detail="Unable to retrieve exchange rate.") from exc
+
+
 @router.get("/rate")
 async def get_currency_rate():
     global _rate_cache

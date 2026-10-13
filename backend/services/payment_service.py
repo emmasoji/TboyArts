@@ -57,16 +57,12 @@ async def mark_order_paid_from_payment(
             ),
         }
 
-    if payment_currency != "NGN":
-        raise ValueError(
-            "Payment currency does not match the order."
-        )
-
     orders = await select(
         "orders",
         columns=(
-            "id,total,payment_status,status,"
-            "payment_reference"
+            "id,total,currency,payment_amount,"
+            "payment_exchange_rate,country,"
+            "payment_status,status,payment_reference"
         ),
         filters={
             "payment_reference": reference,
@@ -80,13 +76,32 @@ async def mark_order_paid_from_payment(
 
     order = orders[0]
 
-    order_total_kobo = round(
+    # Paystack payments are NGN-only, regardless of any legacy
+    # currency value or display-currency preference on the order.
+    expected_currency = "NGN"
+
+    if payment_currency != expected_currency:
+        raise ValueError(
+            "Only NGN payments are accepted."
+        )
+
+    # The order total is the authoritative NGN amount.
+    expected_amount_minor = round(
         float(order.get("total") or 0) * 100
     )
 
-    if amount_kobo != order_total_kobo:
+    if amount_kobo != expected_amount_minor:
         raise ValueError(
             "Payment amount does not match the order total."
+        )
+
+    country = str(order.get("country") or "").strip().lower()
+    is_nigeria = country in {"nigeria", "ng"}
+    payment_channel = str(payment.get("channel") or "").strip().lower()
+
+    if not is_nigeria and payment_channel != "card":
+        raise ValueError(
+            "Card payment is required for international orders."
         )
 
     current_payment_status = str(
@@ -146,7 +161,7 @@ async def mark_order_paid_from_payment(
         "success": True,
         "reference": reference,
         "status": "success",
-        "amount": amount_kobo // 100,
+        "amount": amount_kobo / 100,
         "currency": payment_currency,
         "order_id": str(order["id"]),
         "already_paid": current_payment_status == "paid",

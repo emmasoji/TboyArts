@@ -31,6 +31,7 @@ import {
   type Artwork,
 } from "../../../services/artworkService";
 import { supabase } from "../../../lib/supabase";
+import { convertImageWithFreeConvert, getImageFileExtension } from "../../../utils/convertImageWithFreeConvert";
 
 interface ProductDraft {
   id?: string;
@@ -200,17 +201,20 @@ export default function Advertisements() {
         throw new Error("Your admin session has expired.");
       }
 
-      const extension =
-        file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const optimizedFile = await convertImageWithFreeConvert(
+        file,
+        session.access_token,
+      );
 
-      const filePath = `advertisement-${crypto.randomUUID()}.${extension}`;
+      const filePath =
+        `advertisement-${crypto.randomUUID()}.${getImageFileExtension(optimizedFile)}`;
 
       const { error: uploadError } = await supabase.storage
         .from("artworks")
-        .upload(filePath, file, {
+        .upload(filePath, optimizedFile, {
           cacheControl: "2592000",
           upsert: false,
-          contentType: file.type,
+          contentType: optimizedFile.type,
         });
 
       if (uploadError) throw uploadError;
@@ -493,11 +497,17 @@ export default function Advertisements() {
     setError(null);
 
     try {
-      await deleteAdvertisement(ad.id);
+      const bannerCleanupSucceeded = await deleteAdvertisement(ad.id);
       await loadData();
 
       if (editing?.id === ad.id) {
         closeEditor();
+      }
+
+      if (!bannerCleanupSucceeded) {
+        setError(
+          "Advertisement deleted, but its banner could not be removed from Storage. Check the console for details.",
+        );
       }
     } catch (err) {
       console.error("Failed to delete advertisement:", err);

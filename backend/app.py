@@ -6,6 +6,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from routes.orders import router as orders_router
+from routes.shipping import router as shipping_router
 from utils.rate_limit import limiter
 from routes.payments import router as payments_router
 from routes.storage import router as storage_router
@@ -13,7 +14,16 @@ from routes.tracking import router as tracking_router
 from routes.newsletter import router as newsletter_router
 from routes.admin_orders import router as admin_orders_router
 from routes.currency import router as currency_router
-from routes.analytics import router as analytics_router
+try:
+    from routes.analytics import router as analytics_router
+except ModuleNotFoundError as exc:
+    if not (
+        exc.name == "google"
+        or (exc.name or "").startswith("google.analytics")
+    ):
+        raise
+    analytics_router = None
+    print("WARNING: Google Analytics dependency missing; analytics temporarily disabled.")
 
 SERVER_STARTED_AT = datetime.now(timezone.utc)
 
@@ -43,13 +53,15 @@ app.add_middleware(
 )
 
 app.include_router(orders_router)
+app.include_router(shipping_router)
 app.include_router(payments_router)
 app.include_router(storage_router)
 app.include_router(tracking_router)
 app.include_router(newsletter_router)
 app.include_router(admin_orders_router)
 app.include_router(currency_router)
-app.include_router(analytics_router)
+if analytics_router is not None:
+    app.include_router(analytics_router)
 
 
 @app.get("/api/monitor")

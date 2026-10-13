@@ -22,6 +22,7 @@ async def track_order(
             "customer_name,"
             "email,"
             "total,"
+            "shipping_courier_name,"
             "payment_status,"
             "status,"
             "created_at,"
@@ -50,6 +51,7 @@ async def track_order(
         "order_number": order.get("order_number"),
         "customer_name": order.get("customer_name"),
         "total": order.get("total"),
+        "shipping_courier_name": order.get("shipping_courier_name"),
         "payment_status": order.get("payment_status"),
         "status": order.get("status"),
         "created_at": order.get("created_at"),
