@@ -83,14 +83,26 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
             "We couldn't verify the shipping quote. Please fetch shipping rates again."
         ) from exc
 
-    selected = next(
-        (
-            quote for quote in fresh_quotes.get("couriers", [])
-            if str(quote.get("courier_id")) == request.shipping_courier_id
-            and str(quote.get("service_code")) == request.shipping_service_code
-        ),
-        None,
-    )
+    # Terminal Africa rate_ids change on every fetch.
+    # Match by stable courier_id only (service_code/rate_id is not stable).
+    candidates = [
+        quote
+        for quote in fresh_quotes.get("couriers", [])
+        if str(quote.get("courier_id")) == str(request.shipping_courier_id)
+    ]
+
+    # Fallback: match by courier name if slug differs slightly
+    if not candidates:
+        requested_id = str(request.shipping_courier_id or "").strip().lower()
+        candidates = [
+            quote
+            for quote in fresh_quotes.get("couriers", [])
+            if str(quote.get("courier_name") or "").strip().lower() == requested_id
+            or str(quote.get("courier_id") or "").strip().lower() == requested_id
+        ]
+
+    selected = candidates[0] if candidates else None
+
     if not selected:
         raise ValueError(
             "Your selected shipping service is no longer available. Please fetch rates again."
@@ -102,21 +114,25 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
 
     verified_shipping = Decimal(str(selected.get("rate_card_amount")))
     displayed_shipping = Decimal(str(request.shipping_rate_amount))
-    if (
-        not verified_shipping.is_finite()
-        or verified_shipping < 0
-        or verified_shipping != displayed_shipping
-    ):
+
+    if not verified_shipping.is_finite() or verified_shipping < 0:
         raise ValueError(
             "The shipping price has changed. Please fetch shipping rates again."
         )
 
+    # Allow small variance — rates can move between quote and order create
+    difference = abs(verified_shipping - displayed_shipping)
+    if difference > Decimal("50"):
+        raise ValueError(
+            "The shipping price has changed. Please fetch shipping rates again."
+        )
+
+    # Charge the freshly verified amount (safer than the old displayed one)
     tax = Decimal("0")
     total = subtotal + verified_shipping + tax
     order_number = f"TB-{uuid4().hex[:6].upper()}"
 
-    # Paystack checkout is NGN-only. The website's display currency
-    # must never determine the currency or amount charged.
+    # Paystack checkout is NGN-only.
     payment_currency = "NGN"
     payment_exchange_rate = Decimal("1")
     payment_amount = Decimal(str(total))
@@ -139,7 +155,7 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
         "notes": "",
         "payment_method": "paystack",
         "currency": payment_currency,
-        "shipping_provider": "Shipbubble",
+        "shipping_provider": "Terminal Africa",
         "shipping_quote_token": fresh_quotes.get("request_token"),
         "shipping_courier_id": selected.get("courier_id"),
         "shipping_service_code": selected.get("service_code"),
@@ -168,6 +184,7 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
             "shipping_courier_name": selected.get("courier_name") or "",
         },
     )
+
     response_items = [
         {
             "artwork_id": str(item["artwork_id"]),
@@ -196,8 +213,6 @@ async def create_order(request: CreateOrderRequest) -> OrderResponse:
         status="pending",
         payment_status="pending",
     )
-
-
 
 async def get_checkout_order(
     order_id: str,
