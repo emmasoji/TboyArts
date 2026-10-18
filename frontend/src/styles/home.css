@@ -363,12 +363,133 @@
 }
 
 
+
 /* =========================================================
-   NEW ARRIVALS
+   NEW ARRIVALS — Gallery-style marquee (improved)
    ========================================================= */
 
-.new-arrivals-section {
-  padding: 140px 6%;
+@keyframes new-arrivals-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.new-arrivals-marquee {
+  display: flex;
+  width: max-content;
+  animation: new-arrivals-marquee 45s linear infinite;
+  will-change: transform;
+}
+
+.new-arrivals-marquee:hover {
+  animation-play-state: paused;
+}
+
+.new-arrivals-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  padding-right: 1rem;
+}
+
+.new-arrivals-card {
+  position: relative;
+  flex-shrink: 0;
+  height: 280px;
+  width: 200px;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  transition:
+    width 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.new-arrivals-card:nth-child(3n + 1) {
+  height: 320px;
+  width: 220px;
+}
+
+.new-arrivals-card:nth-child(3n + 2) {
+  height: 260px;
+  width: 180px;
+}
+
+.new-arrivals-card:nth-child(3n) {
+  height: 300px;
+  width: 240px;
+}
+
+.new-arrivals-card.is-center {
+  height: 360px !important;
+  width: 260px !important;
+  transform: translateY(-12px);
+  z-index: 10;
+}
+
+@media (min-width: 640px) {
+  .new-arrivals-group {
+    gap: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .new-arrivals-card {
+    height: 320px;
+    width: 240px;
+  }
+
+  .new-arrivals-card:nth-child(3n + 1) {
+    height: 380px;
+    width: 260px;
+  }
+
+  .new-arrivals-card:nth-child(3n + 2) {
+    height: 300px;
+    width: 210px;
+  }
+
+  .new-arrivals-card:nth-child(3n) {
+    height: 340px;
+    width: 280px;
+  }
+
+  .new-arrivals-card.is-center {
+    height: 420px !important;
+    width: 300px !important;
+    transform: translateY(-16px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .new-arrivals-card {
+    height: 360px;
+    width: 260px;
+  }
+
+  .new-arrivals-card:nth-child(3n + 1) {
+    height: 420px;
+    width: 290px;
+  }
+
+  .new-arrivals-card:nth-child(3n + 2) {
+    height: 340px;
+    width: 230px;
+  }
+
+  .new-arrivals-card:nth-child(3n) {
+    height: 390px;
+    width: 310px;
+  }
+
+  .new-arrivals-card.is-center {
+    height: 480px !important;
+    width: 340px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .new-arrivals-marquee {
+    animation: none;
+  }
 }
 
 .artwork-grid {
@@ -849,483 +970,142 @@
 
 
 /* =========================================================
-   NEW ARRIVALS MARQUEE
+   HOME UI POLISH — smoother motion & mobile
    ========================================================= */
 
-@keyframes new-arrivals-marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-33.333333%);
-  }
-}
-
-.new-arrivals-marquee {
-  animation: new-arrivals-marquee 35s linear infinite;
+.home-primary-button,
+.home-secondary-button {
+  transition:
+    transform 0.35s var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.35s ease;
   will-change: transform;
 }
 
-.new-arrivals-marquee:hover {
-  animation-play-state: paused;
+.home-primary-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
 }
 
-/* Desktop: 5 visible artworks */
-
-.new-arrivals-group {
-  gap: 1.25rem;
-  padding-right: 1.25rem;
+.home-primary-button:active {
+  transform: translateY(-1px);
 }
 
-.new-arrivals-card {
-  width: calc((100vw - 6rem) / 5);
-  transition:
-    width 0.5s ease,
-    transform 0.5s ease;
+.home-secondary-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.75);
 }
 
-/*
- * The third card is the visual center.
- */
-
-.new-arrivals-card:nth-child(3) {
-  width: calc((100vw - 6rem) / 5 * 1.18);
-  transform: scale(1.04);
+.category-card {
+  transition: transform 0.4s var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
-/* Mobile: 3 visible artworks */
-
-@media (max-width: 639px) {
-
-  .new-arrivals-group {
-    gap: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  .new-arrivals-card {
-    width: calc((100vw - 3rem) / 3);
-  }
-
-  /*
-   * The second card is the center.
-   */
-
-  .new-arrivals-card:nth-child(2) {
-    width: calc((100vw - 3rem) / 3 * 1.18);
-    transform: scale(1.04);
-  }
-
+.category-card:hover {
+  transform: translateY(-6px);
 }
 
-/* Respect reduced-motion preferences */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .new-arrivals-marquee {
-    animation: none;
-    transform: translateX(0);
-  }
-
-}
-
-
-/* =========================================================
-   NEW ARRIVALS MARQUEE
-   ========================================================= */
-
-@keyframes new-arrivals-marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-33.333333%);
-  }
-}
-
-.new-arrivals-marquee {
-  animation: new-arrivals-marquee 35s linear infinite;
-  transform-origin: center center;
+.category-card img {
+  transition: transform 0.85s var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
   will-change: transform;
 }
 
-.new-arrivals-marquee:hover {
-  animation-play-state: paused;
+.category-card:hover img {
+  transform: scale(1.06);
 }
 
-.new-arrivals-group {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding-right: 1.25rem;
+.featured-artwork {
+  transition: box-shadow 0.4s ease;
 }
 
-.new-arrivals-card {
-  position: relative;
-  width: calc((100vw - 6rem - 5rem) / 5);
-  transform-origin: center center;
-  transition:
-    transform 180ms ease-out,
-    z-index 180ms ease-out;
+.featured-artwork:hover {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
 }
 
-/* Desktop: approximately 5 cards visible */
+.artwork-image img,
+.artwork-card-image {
+  transition: transform 0.75s var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
 
-@media (min-width: 640px) {
-
-  .new-arrivals-card {
-    width: calc((100vw - 6rem - 5rem) / 5);
+/* Mobile refinements */
+@media (max-width: 768px) {
+  .home-hero {
+    min-height: calc(100svh - 64px);
   }
 
+  .category-card:hover,
+  .featured-artwork:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .category-card:active {
+    transform: scale(0.99);
+  }
+
+  .home-primary-button,
+  .home-secondary-button {
+    min-height: 52px;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .section-heading h2 {
+    font-size: clamp(36px, 10vw, 52px);
+  }
+
+  .categories-section,
+  .new-arrivals-section,
+  .featured-section {
+    padding-left: 5vw;
+    padding-right: 5vw;
+  }
 }
 
-/* Mobile: approximately 3 cards visible */
-
-@media (max-width: 639px) {
-
-  .new-arrivals-marquee {
-    animation-duration: 30s;
+@media (max-width: 480px) {
+  .category-grid {
+    gap: 14px;
   }
 
-  .new-arrivals-group {
-    gap: 0.75rem;
-    padding-right: 0.75rem;
+  .category-card {
+    min-height: 280px;
+    border-radius: 20px;
   }
 
-  .new-arrivals-card {
-    width: calc((100vw - 3rem - 1.5rem) / 3);
+  .category-card:first-child {
+    min-height: 420px;
   }
 
+  .category-content {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+  }
+
+  .category-content h3 {
+    font-size: 22px;
+  }
+
+  .featured-artwork-info {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .featured-artwork-info h3 {
+    font-size: 22px;
+  }
 }
-
-/* Reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
-
-  .new-arrivals-marquee {
-    animation: none;
-  }
-
-  .new-arrivals-card {
+  .home-primary-button,
+  .home-secondary-button,
+  .category-card,
+  .category-card img,
+  .featured-artwork {
+    transition: none !important;
     transform: none !important;
   }
-
 }
-
-
-/* =========================================================
-   NEW ARRIVALS MARQUEE
-   ========================================================= */
-
-@keyframes new-arrivals-marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-33.333333%);
-  }
-}
-
-.new-arrivals-marquee {
-  animation: new-arrivals-marquee 35s linear infinite;
-  will-change: transform;
-}
-
-.new-arrivals-marquee:hover {
-  animation-play-state: paused;
-}
-
-.new-arrivals-group {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding-right: 1.25rem;
-}
-
-.new-arrivals-card {
-  width: calc((100vw - 6rem - 5rem) / 5);
-  height: 390px;
-  flex: 0 0 auto;
-
-  transition:
-    width 350ms ease,
-    height 350ms ease;
-
-  overflow: hidden;
-}
-
-.new-arrivals-image {
-  height: 100%;
-}
-
-/* MOBILE */
-
-@media (max-width: 639px) {
-
-  .new-arrivals-marquee {
-    animation-duration: 30s;
-  }
-
-  .new-arrivals-group {
-    gap: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  .new-arrivals-card {
-    width: calc((100vw - 3rem - 1.5rem) / 3);
-    height: 260px;
-  }
-
-}
-
-/* REDUCED MOTION */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .new-arrivals-marquee {
-    animation: none;
-  }
-
-}
-
-
-/* =========================================================
-   NEW ARRIVALS — PREMIUM MARQUEE
-   ========================================================= */
-
-@keyframes new-arrivals-marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-33.333333%);
-  }
-}
-
-.new-arrivals-marquee {
-  animation: new-arrivals-marquee 38s linear infinite;
-  will-change: transform;
-}
-
-.new-arrivals-marquee:hover {
-  animation-play-state: paused;
-}
-
-.new-arrivals-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 1.5rem;
-  padding-right: 1.5rem;
-}
-
-.new-arrivals-card {
-  width: calc((100vw - 8rem - 5rem) / 5);
-  height: 440px;
-  flex: 0 0 auto;
-
-  overflow: visible;
-
-  transition:
-    width 400ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 400ms cubic-bezier(0.22, 1, 0.36, 1);
-
-  transform-origin: center top;
-}
-
-.new-arrivals-image {
-  height: 100%;
-}
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 639px) {
-
-  .new-arrivals-marquee {
-    animation-duration: 32s;
-  }
-
-  .new-arrivals-group {
-    gap: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  .new-arrivals-card {
-    width: calc((100vw - 3rem - 1.5rem) / 3);
-    height: 300px;
-  }
-
-}
-
-/* =========================================================
-   REDUCED MOTION
-   ========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .new-arrivals-marquee {
-    animation: none;
-  }
-
-}
-
-
-/* =========================================================
-   NEW ARRIVALS MARQUEE
-   ========================================================= */
-
-@keyframes new-arrivals-marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-33.333333%);
-  }
-}
-
-.new-arrivals-marquee {
-  animation: new-arrivals-marquee 36s linear infinite;
-  will-change: transform;
-}
-
-.new-arrivals-marquee:hover {
-  animation-play-state: paused;
-}
-
-.new-arrivals-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding-right: 1rem;
-}
-
-.new-arrivals-card {
-  width: calc((100vw - 6rem - 4rem) / 5);
-  height: 200px;
-  flex: 0 0 auto;
-
-  overflow: hidden;
-
-  transition:
-    width 400ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 400ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 639px) {
-
-  .new-arrivals-marquee {
-    animation-duration: 30s;
-  }
-
-  .new-arrivals-group {
-    gap: 0.5rem;
-    padding-right: 0.5rem;
-  }
-
-  .new-arrivals-card {
-    width: calc((100vw - 2rem - 1rem) / 3);
-    height: 200px;
-  }
-
-}
-
-/* =========================================================
-   REDUCED MOTION
-   ========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .new-arrivals-marquee {
-    animation: none;
-  }
-
-}
-
-
-/* =========================================================
-   NEW ARRIVALS — CENTERED WIDE MARQUEE
-   ========================================================= */
-
-@keyframes new-arrivals-marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-33.333333%);
-  }
-}
-
-.new-arrivals-marquee {
-  animation: new-arrivals-marquee 38s linear infinite;
-  will-change: transform;
-  display: flex;
-  align-items: center;
-}
-
-.new-arrivals-marquee:hover {
-  animation-play-state: paused;
-}
-
-.new-arrivals-group {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  padding-right: 1.25rem;
-}
-
-.new-arrivals-card {
-  width: 18vw;
-  height: 200px;
-  flex: 0 0 auto;
-  overflow: hidden;
-
-  transition:
-    width 400ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 400ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 639px) {
-
-  .new-arrivals-marquee {
-    animation-duration: 32s;
-  }
-
-  .new-arrivals-group {
-    gap: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  .new-arrivals-card {
-    width: 30vw;
-    height: 200px;
-  }
-
-}
-
-/* =========================================================
-   REDUCED MOTION
-   ========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .new-arrivals-marquee {
-    animation: none;
-  }
-
-}
-

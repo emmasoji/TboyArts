@@ -37,6 +37,8 @@ const navigation = [
 ];
 
 export default function Navbar() {
+  const [hidden, setHidden] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const getLogoUrl = () =>
@@ -61,6 +63,28 @@ export default function Navbar() {
       );
     };
   }, []);
+
+  useEffect(() => {
+  const onScroll = () => {
+    const currentY = window.scrollY;
+
+    // Always show near the top
+    if (currentY < 80) {
+      setHidden(false);
+    } else if (currentY > lastScrollY + 8) {
+      // Scrolling down → hide
+      setHidden(true);
+    } else if (currentY < lastScrollY - 8) {
+      // Scrolling up → show
+      setHidden(false);
+    }
+
+    setLastScrollY(currentY);
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  return () => window.removeEventListener("scroll", onScroll);
+}, [lastScrollY]);
 
   const { openTrackOrder } = useTrackOrder();
   const { itemCount, openCart } = useCart();
@@ -105,11 +129,10 @@ export default function Navbar() {
       <header
         className={[
           "fixed inset-x-0 top-0 z-50",
-          "flex h-[70px] items-center justify-between",
-          "border-b px-4 sm:px-6 lg:px-8",
-          "backdrop-blur-xl",
-          "transition-colors duration-300",
-          "tboyarts-navbar-drop",
+    "flex h-[70px] items-center justify-between",
+    "border-b px-4 sm:px-6 lg:px-8",
+    "backdrop-blur-xl transition-transform duration-300 ease-out",
+    hidden ? "-translate-y-full" : "translate-y-0",
           light
             ? "border-black/10 bg-white/75 text-neutral-950"
             : "border-white/10 bg-black/55 text-white",

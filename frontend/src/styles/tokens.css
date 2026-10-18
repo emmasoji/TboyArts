@@ -27,20 +27,24 @@
 
   /* Effects */
   --overlay: rgba(0, 0, 0, 0.5);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 40px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.12);
 
   /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 28px;
 
-  /* Motion */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 400ms ease;
+  /* Motion — refined cubic-bezier for premium feel */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 180ms var(--ease-out);
+  --transition-normal: 320ms var(--ease-out);
+  --transition-slow: 480ms var(--ease-out);
 }
 
 :root[data-theme="dark"] {
@@ -72,7 +76,8 @@
 
   /* Effects */
   --overlay: rgba(0, 0, 0, 0.7);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 40px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55);
+  --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.5);
 }

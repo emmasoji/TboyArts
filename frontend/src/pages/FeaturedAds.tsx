@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  ArrowUpRight,
 } from "lucide-react";
 import {
   useCallback,
@@ -18,202 +19,114 @@ import SEO from "../components/seo/SEO";
 import ErrorState from "../components/errors/ErrorState";
 
 import {
-  getActiveAdvertisement,
-  type Advertisement,
-  type AdvertisementProduct,
-} from "../services/advertisementService";
+  getNewestDrops,
+  type Artwork,
+} from "../services/artworkService";
 
 export default function FeaturedAds() {
   const navigate = useNavigate();
 
-  const [advertisement, setAdvertisement] =
-    useState<Advertisement | null>(null);
-  const [currentIndex, setCurrentIndex] =
-    useState(0);
+  const [drops, setDrops] = useState<Artwork[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [showNavigation, setShowNavigation] = useState(true);
 
   const touchStartX = useRef<number | null>(null);
-  const touchCurrentX = useRef<number | null>(null);
   const navigationTimer = useRef<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadAdvertisement = async () => {
+    const load = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const data = await getActiveAdvertisement();
+        const data = await getNewestDrops();
 
         if (cancelled) return;
 
-        setAdvertisement(data);
+        setDrops(data);
         setCurrentIndex(0);
       } catch (err) {
-        console.error(
-          "Failed to load featured advertisement page:",
-          err,
-        );
-
+        console.error("Failed to load newest drops:", err);
         if (!cancelled) {
           setError(
             err instanceof Error
               ? err.message
-              : "Unable to load the featured advertisement.",
+              : "Unable to load the newest drops.",
           );
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     };
 
-    void loadAdvertisement();
-
+    void load();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const products =
-    advertisement?.products ?? [];
-
-  const productCount = products.length;
-
-  const currentProduct =
-    products[
-      Math.min(
-        currentIndex,
-        Math.max(productCount - 1, 0),
-      )
-    ]!;
+  const count = drops.length;
+  const current = drops[Math.min(currentIndex, Math.max(count - 1, 0))];
 
   const goTo = useCallback(
     (index: number) => {
-      if (productCount === 0) return;
-
-      setCurrentIndex(
-        ((index % productCount) + productCount) %
-          productCount,
-      );
+      if (count === 0) return;
+      setCurrentIndex(((index % count) + count) % count);
     },
-    [productCount],
+    [count],
   );
 
-  const next = useCallback(() => {
-    if (productCount <= 1) return;
+  const goNext = useCallback(() => goTo(currentIndex + 1), [currentIndex, goTo]);
+  const goPrev = useCallback(() => goTo(currentIndex - 1), [currentIndex, goTo]);
 
-    setCurrentIndex(
-      (currentIndex + 1) % productCount,
-    );
-  }, [currentIndex, productCount]);
-
-  const previous = useCallback(() => {
-    if (productCount <= 1) return;
-
-    setCurrentIndex(
-      (currentIndex - 1 + productCount) %
-        productCount,
-    );
-  }, [currentIndex, productCount]);
-
+  // Auto-hide navigation
   useEffect(() => {
-    if (productCount <= 1) return;
+    const show = () => {
+      setShowNavigation(true);
+      if (navigationTimer.current) clearTimeout(navigationTimer.current);
+      navigationTimer.current = window.setTimeout(() => {
+        setShowNavigation(false);
+      }, 3000);
+    };
 
-    const timer = window.setInterval(() => {
-      setCurrentIndex((index) =>
-        (index + 1) % productCount,
-      );
-    }, 5000);
+    show();
+    window.addEventListener("mousemove", show);
+    window.addEventListener("touchstart", show);
 
     return () => {
-      window.clearInterval(timer);
+      window.removeEventListener("mousemove", show);
+      window.removeEventListener("touchstart", show);
+      if (navigationTimer.current) clearTimeout(navigationTimer.current);
     };
-  }, [productCount]);
-
-  const handleTouchStart = (
-    event: React.TouchEvent<HTMLElement>,
-  ) => {
-    registerInteraction();
-    touchStartX.current =
-      event.touches[0]?.clientX ?? null;
-    touchCurrentX.current =
-      touchStartX.current;
-  };
-
-  const handleTouchMove = (
-    event: React.TouchEvent<HTMLElement>,
-  ) => {
-    touchCurrentX.current =
-      event.touches[0]?.clientX ?? null;
-  };
-
-  const handleTouchEnd = () => {
-    if (
-      touchStartX.current === null ||
-      touchCurrentX.current === null ||
-      productCount <= 1
-    ) {
-      touchStartX.current = null;
-      touchCurrentX.current = null;
-      return;
-    }
-
-    const distance =
-      touchStartX.current -
-      touchCurrentX.current;
-
-    if (Math.abs(distance) > 50) {
-      if (distance > 0) {
-        next();
-      } else {
-        previous();
-      }
-    }
-
-    touchStartX.current = null;
-    touchCurrentX.current = null;
-  };
-
-  const registerInteraction = useCallback(() => {
-    setShowNavigation(true);
-
-    if (navigationTimer.current !== null) {
-      window.clearTimeout(navigationTimer.current);
-    }
-
-    navigationTimer.current = window.setTimeout(() => {
-      setShowNavigation(false);
-    }, 3000);
   }, []);
 
+  // Keyboard navigation
   useEffect(() => {
-    registerInteraction();
-
-    return () => {
-      if (navigationTimer.current !== null) {
-        window.clearTimeout(navigationTimer.current);
-      }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "Escape") navigate(-1);
     };
-  }, [registerInteraction]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goNext, goPrev, navigate]);
 
-  const openArtwork = (
-    product: AdvertisementProduct,
-  ) => {
-    if (!product.artwork.customer_visible) {
-      return;
+  // Touch swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff < 0) goNext();
+      else goPrev();
     }
-
-    navigate("/shop", {
-      state: {
-        artworkId: product.artwork.id,
-      },
-    });
+    touchStartX.current = null;
   };
 
   if (loading) {
@@ -222,24 +135,32 @@ export default function FeaturedAds() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <ErrorState
-          type="server"
-          message={error}
-        />
-      </div>
+      <ErrorState
+        type="server"
+        fullPage
+        title="Unable to Load Drops"
+        message={error}
+        actionLabel="Go Home"
+        onAction={() => navigate("/")}
+      />
     );
   }
 
-  if (!advertisement || productCount === 0) {
+  if (count === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-center text-white">
+        <p className="text-sm uppercase tracking-[0.3em] text-white/40">
+          New Drops
+        </p>
+        <h1 className="mt-4 font-serif text-3xl sm:text-4xl">
+          No drops available right now
+        </h1>
         <button
           type="button"
-          onClick={() => navigate(-1)}
-          className="rounded-full border border-white/20 px-5 py-3 text-sm text-white/80 transition hover:bg-white/10"
+          onClick={() => navigate("/shop")}
+          className="mt-8 rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-white/90"
         >
-          Go Back
+          Browse the Shop
         </button>
       </div>
     );
@@ -248,230 +169,133 @@ export default function FeaturedAds() {
   return (
     <>
       <SEO
-        title={
-          advertisement.title
-            ? `${advertisement.title} — TboyArts`
-            : "Featured Collection — TboyArts"
-        }
-        description={
-          advertisement.text ||
-          "Explore the featured TboyArts collection."
-        }
+        title="New Drops — TboyArts"
+        description="Discover the latest artwork drops from TboyArts."
       />
 
-      <div className="min-h-screen bg-black text-white">
-        <main
-          className="relative min-h-screen overflow-hidden"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onClick={registerInteraction}
-          onPointerMove={registerInteraction}
-        >
-          {/* Full-screen artwork */}
-          <div className="fixed inset-0 z-0 overflow-hidden">
-            <AnimatePresence mode="sync" initial={false}>
-              {currentProduct.artwork.image ? (
-                <motion.img
-                  key={currentProduct.artwork.id}
-                  src={currentProduct.artwork.image}
-                  alt={
-                    currentProduct.artwork.title ??
-                    currentProduct.title
-                  }
-                  initial={{
-                    opacity: 0,
-                    scale: 1.035,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    scale: 0.985,
-                  }}
-                  transition={{
-                    opacity: {
-                      duration: 0.8,
-                      ease: "easeInOut",
-                    },
-                    scale: {
-                      duration: 1.1,
-                      ease: "easeOut",
-                    },
-                  }}
-                  className="absolute inset-0 h-full w-full select-none object-cover object-center"
-                  draggable={false}
-                />
-              ) : (
-                <motion.div
-                  key="artwork-unavailable"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 flex items-center justify-center bg-black text-sm text-white/50"
-                >
-                  Artwork image unavailable
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Curved black cinematic overlay */}
-          <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
-            <svg
-              className="absolute inset-0 h-full w-full"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-hidden="true"
+      <div
+        className="relative min-h-screen overflow-hidden bg-black text-white"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Background image with crossfade */}
+        <div className="absolute inset-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={current.id}
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0"
             >
-              <path
-                d="M 0 0 H 12 C 0 22, 18 72, 100 100 H 0 Z"
-                fill="black"
-                fillOpacity="0.88"
+              <ProtectedImage
+                src={current.image ?? ""}
+                alt={current.title ?? "Newest drop"}
+                className="h-full w-full object-cover"
               />
-            </svg>
-          </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-          {/* Close */}
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label="Go back"
-            className="absolute right-5 top-5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition hover:bg-black/50 sm:right-8 sm:top-8"
-          >
-            <X size={19} />
-          </button>
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className={`fixed right-5 top-5 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition hover:bg-black/50 sm:right-8 sm:top-8 ${
+            showNavigation ? "opacity-100" : "opacity-0"
+          }`}
+          aria-label="Close"
+        >
+          <X size={19} />
+        </button>
 
-          {/* Product information */}
-          <div className="relative z-20 flex min-h-screen w-full items-end">
-            <section className="w-full px-6 pb-16 pt-24 sm:px-10 sm:pb-20 lg:w-[62%] lg:px-16 lg:pb-24 xl:w-[56%]">
-              <div className="max-w-xl">
-                {advertisement.title && (
-                  <p className="mb-4 text-xs uppercase tracking-[0.32em] text-white/55">
-                    {advertisement.title}
-                  </p>
-                )}
+        {/* Navigation arrows (only if multiple) */}
+        {count > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={goPrev}
+              className={`fixed left-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition hover:bg-black/50 sm:left-8 ${
+                showNavigation ? "opacity-100" : "opacity-0"
+              }`}
+              aria-label="Previous drop"
+            >
+              <ChevronLeft size={22} />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              className={`fixed right-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition hover:bg-black/50 sm:right-8 ${
+                showNavigation ? "opacity-100" : "opacity-0"
+              }`}
+              aria-label="Next drop"
+            >
+              <ChevronRight size={22} />
+            </button>
+          </>
+        )}
 
-                <h1 className="text-4xl font-medium leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  {currentProduct.title ||
-                    currentProduct.artwork.title}
-                </h1>
+        {/* Content */}
+        <div className="relative z-20 flex min-h-screen w-full items-end">
+          <section className="w-full px-6 pb-16 pt-24 sm:px-10 sm:pb-20 lg:w-[60%] lg:px-16 lg:pb-24">
+            <div className="max-w-xl">
 
-                {currentProduct.text && (
-                  <p className="mt-5 max-w-lg text-sm leading-7 text-white/70 sm:text-base">
-                    {currentProduct.text}
-                  </p>
-                )}
+              <h1 className="font-serif text-4xl font-medium leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                {current.title || "Untitled"}
+              </h1>
 
+              {current.description && (
+                <p className="mt-5 max-w-lg text-sm leading-7 text-white/70 sm:text-base line-clamp-4">
+                  {current.description}
+                </p>
+              )}
+
+              <div className="mt-8 flex flex-wrap gap-3">
                 <button
-                  type="button"
-                  onClick={() =>
-                    openArtwork(currentProduct)
-                  }
-                  disabled={
-                    !currentProduct.artwork
-                      .customer_visible
-                  }
-                  className="mt-8 rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-default disabled:bg-white/15 disabled:text-white/60"
-                >
-                  {currentProduct.artwork
-                    .customer_visible
-                    ? "View Artwork"
-                    : "Coming Soon"}
-                </button>
+  type="button"
+  onClick={() => navigate(`/shop?artwork=${current.id}`)}
+  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-white/90"
+>
+  See more
+  <ArrowUpRight size={16} />
+</button>
 
-                {/* Artwork thumbnails */}
-                {productCount > 1 && (
-                  <div className="mt-10 flex max-w-full gap-3 overflow-x-auto pb-2">
-                    {products.map(
-                      (product, index) => (
-                        <button
-                          key={product.id}
-                          type="button"
-                          onClick={() =>
-                            goTo(index)
-                          }
-                          aria-label={`Show ${
-                            product.title ||
-                            product.artwork.title ||
-                            `artwork ${index + 1}`
-                          }`}
-                          aria-current={
-                            index === currentIndex
-                          }
-                          className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border transition sm:h-20 sm:w-20 ${
-                            index === currentIndex
-                              ? "border-white opacity-100"
-                              : "border-white/20 opacity-55 hover:opacity-100"
-                          }`}
-                        >
-                          {product.artwork.image ? (
-                            <ProtectedImage
-                              src={
-                                product.artwork.image
-                              }
-                              alt={
-                                product.artwork.title ??
-                                product.title
-                              }
-                              className="h-full w-full object-cover"
-                              draggable={false}
-                            />
-                          ) : (
-                            <span className="flex h-full w-full items-center justify-center bg-white/5 text-[10px] text-white/40">
-                              No image
-                            </span>
-                          )}
-                        </button>
-                      ),
-                    )}
-                  </div>
+                {current.category && (
+                  <span className="inline-flex items-center rounded-full border border-white/20 px-4 py-3 text-xs uppercase tracking-[0.2em] text-white/60">
+                    {current.category}
+                  </span>
                 )}
               </div>
-            </section>
-          </div>
 
-          {/* Carousel arrows */}
-          {productCount > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  registerInteraction();
-                  previous();
-                }}
-                aria-label="Previous artwork"
-                className={`absolute left-4 top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition-all duration-700 ease-in-out sm:left-8 ${
-                  showNavigation
-                    ? "translate-x-0 opacity-100"
-                    : "-translate-x-3 opacity-0 pointer-events-none"
-                }`}
-              >
-                <ChevronLeft size={21} />
-              </button>
-
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  registerInteraction();
-                  next();
-                }}
-                aria-label="Next artwork"
-                className={`absolute right-4 top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition-all duration-700 ease-in-out sm:right-8 ${
-                  showNavigation
-                    ? "translate-x-0 opacity-100"
-                    : "translate-x-3 opacity-0 pointer-events-none"
-                }`}
-              >
-                <ChevronRight size={21} />
-              </button>
-            </>
-          )}
-          </main>
+              {/* Thumbnails */}
+              {count > 1 && (
+                <div className="mt-10 flex max-w-full gap-3 overflow-x-auto pb-2">
+                  {drops.map((drop, index) => (
+                    <button
+                      key={drop.id}
+                      type="button"
+                      onClick={() => goTo(index)}
+                      aria-label={`Show ${drop.title || `drop ${index + 1}`}`}
+                      className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:h-20 sm:w-20 ${
+                        index === currentIndex
+                          ? "border-white"
+                          : "border-transparent opacity-60 hover:opacity-100"
+                      }`}
+                    >
+                      <ProtectedImage
+                        src={drop.image ?? ""}
+                        alt={drop.title ?? ""}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </>
   );

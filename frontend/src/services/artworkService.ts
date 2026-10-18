@@ -12,6 +12,7 @@ export interface Artwork {
   description: string | null;
   image: string | null;
   featured: boolean | null;
+  is_newest_drop: boolean | null;
   status: string | null;
   created_at: string;
   updated_at: string | null;
@@ -218,4 +219,23 @@ export async function deleteArtwork(
       storageError,
     );
   }
+}
+
+/**
+ * Customer-facing Newest Drops.
+ * Returns artworks marked as is_newest_drop = true.
+ */
+export async function getNewestDrops(): Promise<Artwork[]> {
+  const { data, error } = await supabase
+    .from("artworks")
+    .select("*")
+    .eq("is_newest_drop", true)
+    .eq("customer_visible", true)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as Artwork[];
 }

@@ -34,7 +34,7 @@ export interface ShippingQuoteResponse {
 }
 
 export interface SelectedShipping {
-  receiver_address_code: number;
+  receiver_address_code: string;
   shipping_courier_id: string;
   shipping_service_code: string;
   shipping_rate_amount: number;
@@ -71,7 +71,7 @@ function getArtworkId(item: CartItem): string {
 export async function validateShippingAddress(
   customer: CustomerDetails,
 ): Promise<{
-  address_code: number;
+  address_code: string;  // was number
   formatted_address?: string;
   country?: string;
   country_code?: string;
@@ -103,7 +103,7 @@ export async function validateShippingAddress(
 
 export async function fetchShippingRates(
   artworkIds: string[],
-  receiverAddressCode: number,
+  receiverAddressCode: string,  // was number
   deliveryInstructions = "",
 ): Promise<ShippingQuoteResponse> {
   const response = await fetch(`${API_BASE_URL}/api/shipping/rates`, {

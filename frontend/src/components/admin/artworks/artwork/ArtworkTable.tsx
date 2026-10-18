@@ -305,9 +305,12 @@ export default function ArtworkTable() {
         featured:
           Boolean(data.featured),
 
+        is_newest_drop:
+          Boolean(data.is_newest_drop),
+        
         status:
           data.status || "available",
-
+        
         customer_visible:
           Boolean(data.customer_visible),
       });
@@ -379,10 +382,16 @@ export default function ArtworkTable() {
 
           featured:
             Boolean(data.featured),
+          
+          is_newest_drop:
+            Boolean(data.is_newest_drop),
 
           status:
             data.status ||
             "available",
+
+          customer_visible:
+            Boolean(data.customer_visible),
         },
       );
 
@@ -1684,6 +1693,9 @@ export default function ArtworkTable() {
               Boolean(
                 editingArtwork.featured,
               ),
+
+            is_newest_drop:
+              Boolean(editingArtwork.is_newest_drop),
 
             status:
               editingArtwork.status ??

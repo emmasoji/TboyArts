@@ -9,8 +9,6 @@ import Customers from "./customers/Customers";
 import ArtistManagement from "./artist/ArtistManagement";
 import HomepageManagement from "./homepage/HomepageManagement";
 import AdminSettings from "./settings/AdminSettings";
-import Advertisements from "./advertisements/Advertisements";
-
 import { useAdminTheme } from "../../contexts/AdminThemeContext";
 
 export type AdminSection =
@@ -20,7 +18,6 @@ export type AdminSection =
   | "customers"
   | "artist"
   | "homepage"
-  | "ads"
   | "settings";
 
 export default function AdminLayout() {
@@ -42,7 +39,6 @@ export default function AdminLayout() {
       "customers",
       "artist",
       "homepage",
-      "ads",
       "settings",
     ];
 
@@ -86,8 +82,6 @@ export default function AdminLayout() {
         return <ArtistManagement />;
       case "homepage":
         return <HomepageManagement />;
-      case "ads":
-        return <Advertisements />;
       case "settings":
         return <AdminSettings />;
       default:

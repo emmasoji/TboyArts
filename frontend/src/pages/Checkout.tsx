@@ -103,7 +103,7 @@ export default function Checkout() {
     useState(false);
 
   const [order, setOrder] = useState<CreateOrderResponse | null>(null);
-  const [receiverAddressCode, setReceiverAddressCode] = useState<number | null>(null);
+  const [receiverAddressCode, setReceiverAddressCode] = useState<string | null>(null);
   const [shippingCouriers, setShippingCouriers] = useState<ShippingCourier[]>([]);
   const [selectedCourierKey, setSelectedCourierKey] = useState("");
   const [shippingLoading, setShippingLoading] = useState(false);

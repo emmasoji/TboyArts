@@ -279,51 +279,16 @@ export default function NewArrivals({
           }
         },
       );
+      
+      cardRefs.current.forEach((card) => {
+  if (!card) return;
 
-      const mobile =
-        window.innerWidth < 640;
-
-      const normalWidth = mobile
-        ? "50vw"
-        : "20vw";
-
-      const centerWidth = mobile
-        ? "70vw"
-        : "30vw";
-
-      const normalHeight =
-        "300px";
-
-      const centerHeight =
-        "350px";
-
-      cardRefs.current.forEach(
-        (card) => {
-          if (!card) return;
-
-          if (
-            card === closestCard
-          ) {
-            card.style.width =
-              centerWidth;
-
-            card.style.height =
-              centerHeight;
-
-            card.style.zIndex =
-              "10";
-          } else {
-            card.style.width =
-              normalWidth;
-
-            card.style.height =
-              normalHeight;
-
-            card.style.zIndex =
-              "1";
-          }
-        },
-      );
+  if (card === closestCard) {
+    card.classList.add("is-center");
+  } else {
+    card.classList.remove("is-center");
+  }
+});
 
       frame =
         requestAnimationFrame(

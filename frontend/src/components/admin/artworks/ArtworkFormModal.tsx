@@ -28,6 +28,7 @@ export interface ArtworkFormData {
   description: string;
   image: string;
   featured: boolean;
+  is_newest_drop: boolean;   // ← add this
   status: string;
   customer_visible: boolean;
 }
@@ -58,6 +59,7 @@ const emptyForm: ArtworkFormData = {
   description: "",
   image: "",
   featured: false,
+  is_newest_drop: false,   // ← add this
   status: "available",
   customer_visible: true,
 };
@@ -1467,6 +1469,32 @@ export default function ArtworkFormModal({
                     />
 
                   </label>
+
+                  <label className="
+  flex items-center justify-between gap-4
+  rounded-xl border border-white/10
+  p-4
+  transition
+  hover:bg-white/[0.04]
+">
+  <div>
+    <p className="text-sm font-medium">
+      Newest Drop
+    </p>
+    <p className="mt-1 text-xs text-white/30">
+      Show this artwork in the New Drops section on the homepage.
+    </p>
+  </div>
+
+  <input
+    type="checkbox"
+    checked={Boolean(form.is_newest_drop)}
+    onChange={(event) =>
+      updateField("is_newest_drop", event.target.checked)
+    }
+    className="h-5 w-5 accent-white"
+  />
+</label>
 
                 </div>
 

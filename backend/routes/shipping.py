@@ -27,9 +27,8 @@ class AddressValidationRequest(BaseModel):
 
 class ShippingRateRequest(BaseModel):
     artwork_ids: list[str] = Field(min_length=1, max_length=30)
-    receiver_address_code: int = Field(gt=0)
+    receiver_address_code: str = Field(min_length=1, max_length=80)  # was int
     delivery_instructions: str = Field(default="", max_length=500)
-
 
 def _positive_decimal(value: Any, field_name: str) -> Decimal:
     try:

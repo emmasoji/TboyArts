@@ -14,6 +14,7 @@ export interface Artwork {
   year: number;
   status: ArtworkStatus;
   featured?: boolean;
+  is_newest_drop?: boolean;
   newArrival?: boolean;
   category?: string;
   medium?: string;

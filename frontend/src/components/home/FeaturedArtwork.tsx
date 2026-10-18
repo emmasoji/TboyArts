@@ -2,8 +2,8 @@ import ProtectedImage from "../artwork/ProtectedImage";
 
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
-  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Eye,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -432,24 +432,24 @@ export default function FeaturedArtwork({
                   className="featured-carousel-control"
                   aria-label="Previous artwork"
                 >
-                  <ArrowLeft size={19} />
+                  <ChevronLeft size={19} />
                 </button>
 
-                <div className="featured-carousel-counter">
-                  <span>
-                    {String(
-                      currentIndex + 1,
-                    ).padStart(2, "0")}
-                  </span>
-
-                  <span className="featured-carousel-counter-line" />
-
-                  <span>
-                    {String(
-                      artworks.length,
-                    ).padStart(2, "0")}
-                  </span>
-                </div>
+                <div className="flex items-center gap-2">
+  {artworks.map((_, i) => (
+    <button
+      key={i}
+      type="button"
+      onClick={() => setCurrentIndex(i)}
+      aria-label={`Go to artwork ${i + 1}`}
+      className={`h-1.5 rounded-full transition-all ${
+        i === currentIndex
+          ? "w-8 bg-current"
+          : "w-1.5 bg-current/30"
+      }`}
+    />
+  ))}
+</div>
 
                 <button
                   type="button"
@@ -457,7 +457,7 @@ export default function FeaturedArtwork({
                   className="featured-carousel-control"
                   aria-label="Next artwork"
                 >
-                  <ArrowRight size={19} />
+                  <ChevronRight size={19} />
                 </button>
 
               </div>
@@ -474,7 +474,7 @@ export default function FeaturedArtwork({
           className="featured-artwork-link"
         >
           Explore all artworks
-          <ArrowRight size={18} />
+          <ChevronRight size={18} />
         </Link>
       </div>
 

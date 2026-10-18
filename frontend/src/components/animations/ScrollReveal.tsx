@@ -15,10 +15,10 @@ export default function ScrollReveal({
   children,
   className,
   delay = 0,
-  duration = 0.8,
-  y = 45,
-  scale = 1,
-  amount = 0.2,
+  duration = 0.7,
+  y = 32,
+  scale = 0.98,
+  amount = 0.15,
   ...props
 }: ScrollRevealProps) {
   return (
@@ -35,8 +35,9 @@ export default function ScrollReveal({
         scale: 1,
       }}
       viewport={{
-        once: false,
+        once: true,
         amount,
+        margin: "0px 0px -40px 0px",
       }}
       transition={{
         duration,

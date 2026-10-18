@@ -1,5 +1,5 @@
 import ProtectedImage from "../components/artwork/ProtectedImage";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowUpRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
@@ -32,26 +32,15 @@ const defaultProfile: ArtistProfile = {
 };
 
 export default function Artist() {
-  const [profile, setProfile] =
-    useState<ArtistProfile>(defaultProfile);
+  const [profile, setProfile] = useState<ArtistProfile>(defaultProfile);
+  const [artworks, setArtworks] = useState<Artwork[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [visible, setVisible] = useState<Set<string>>(new Set());
+  const [activeImage, setActiveImage] = useState(0); // 0 = artist, 1+ = artworks
 
+  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
 
-
-  const [artworks, setArtworks] =
-    useState<Artwork[]>([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [visible, setVisible] =
-    useState<Set<string>>(new Set());
-
-  /*
-   * LOAD ALL ARTIST CONTENT
-   */
   useEffect(() => {
     async function loadArtistPage() {
       try {
@@ -63,25 +52,17 @@ export default function Artist() {
           getCustomerArtworks(),
         ]);
 
-        if (profileData) {
-          setProfile(profileData);
-        }
+        if (profileData) setProfile(profileData);
 
         const exhibitionArtworks = artworkData
-          .filter((artwork) => Boolean(artwork.image))
+          .filter((a) => Boolean(a.image))
           .slice(0, 4);
 
         setArtworks(exhibitionArtworks);
-      } catch (error) {
-        console.error(
-          "Failed to load artist page:",
-          error,
-        );
-
+      } catch (err) {
+        console.error("Failed to load artist page:", err);
         setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load the artist page.",
+          err instanceof Error ? err.message : "Failed to load the artist page.",
         );
       } finally {
         setLoading(false);
@@ -91,66 +72,84 @@ export default function Artist() {
     loadArtistPage();
   }, []);
 
-  /*
-   * SCROLL REVEAL
-   */
+  // Scroll reveal
   useEffect(() => {
-    const elements =
-      document.querySelectorAll<HTMLElement>(
-        "[data-reveal]",
-      );
+    const elements = document.querySelectorAll<HTMLElement>("[data-reveal]");
 
-    const observer =
-      new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (!entry.isIntersecting) {
-              return;
-            }
-
-            const id =
-              entry.target.getAttribute(
-                "data-reveal",
-              );
-
-            if (id) {
-              setVisible((current) => {
-                const next = new Set(current);
-                next.add(id);
-                return next;
-              });
-            }
-          });
-        },
-        {
-          threshold: 0.15,
-          rootMargin:
-            "0px 0px -60px 0px",
-        },
-      );
-
-    elements.forEach((element) =>
-      observer.observe(element),
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const id = entry.target.getAttribute("data-reveal");
+          if (id) {
+            setVisible((current) => {
+              const next = new Set(current);
+              next.add(id);
+              return next;
+            });
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
     );
 
-    return () =>
-      observer.disconnect();
-  }, [
-    loading,
-    artworks,
-  ]);
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [loading, artworks]);
 
-  const reveal = (id: string) =>
-    visible.has(id);
+  // Desktop sticky image switching
+  useEffect(() => {
+    if (loading) return;
 
-  /*
-   * SUPABASE PROFILE IMAGE
-   *
-   * The artist profile image is now managed
-   * through Supabase Storage.
-   */
-  const heroImage =
-    profile.profile_image?.trim() || "";
+    const triggers = sectionRefs.current.filter(Boolean) as HTMLElement[];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestIndex = 0;
+        let bestRatio = 0;
+
+        entries.forEach((entry) => {
+          const index = Number(entry.target.getAttribute("data-index") || 0);
+          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            bestIndex = index;
+          }
+        });
+
+        if (bestRatio > 0.2) {
+          setActiveImage(bestIndex);
+        }
+      },
+      {
+        threshold: [0.2, 0.4, 0.6, 0.8],
+        rootMargin: "-15% 0px -40% 0px",
+      },
+    );
+
+    triggers.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [loading, artworks]);
+
+  const reveal = (id: string) => visible.has(id);
+  const heroImage = profile.profile_image?.trim() || "";
+
+  // Images for the sticky panel: [artist, ...artworks]
+  const stickyImages: {
+    src: string;
+    alt: string;
+    title?: string | null;
+    category?: string | null;
+    isArtist: boolean;
+  }[] = [
+    { src: heroImage, alt: profile.name || "TboyArts artist", isArtist: true },
+    ...artworks.map((a) => ({
+      src: a.image ?? "",
+      alt: a.title ?? "Artwork",
+      title: a.title,
+      category: a.category,
+      isArtist: false,
+    })),
+  ];
 
   return (
     <>
@@ -176,227 +175,219 @@ export default function Artist() {
       ) : (
         <main className="min-h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
 
-      {/* =====================================================
-          HERO
-          ===================================================== */}
+          <section className="px-6 pb-20 pt-32 sm:px-10 sm:pb-28 sm:pt-40 lg:px-16 lg:pb-36 lg:pt-48">
+            <div className="mx-auto max-w-[1500px] lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-24">
 
-      <section className="px-6 pb-20 pt-32 sm:px-10 sm:pb-28 sm:pt-40 lg:px-16 lg:pb-36 lg:pt-48">
-        <div className="mx-auto max-w-[1500px]">
+              {/* ========== LEFT COLUMN (Text) ========== */}
+              <div className="min-w-0">
 
-          <div
-            data-reveal="hero-text"
-            className={`transition-all duration-[1000ms] ease-out ${
-              reveal("hero-text")
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
-          >
+                {/* Hero text – trigger index 0 */}
+                <div
+                  data-reveal="hero-text"
+                  data-index={0}
+                  ref={(el) => { sectionRefs.current[0] = el; }}
+                  className={`transition-all duration-[1000ms] ease-out ${
+                    reveal("hero-text")
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-10 opacity-0"
+                  }`}
+                >
+                  <div className="mb-12 max-w-[900px]">
+                    <div className="flex items-center gap-4">
+                      <span className="h-px w-10 bg-current opacity-30 sm:w-16" />
+                      <span className="text-[9px] font-medium uppercase tracking-[0.42em] opacity-45 sm:text-[10px]">
+                        Artist
+                      </span>
+                    </div>
 
-            <div className="mb-12 max-w-[900px]">
-              <div className="flex items-center gap-4">
-                <span className="h-px w-10 bg-current opacity-30 sm:w-16" />
-                <span className="text-[9px] font-medium uppercase tracking-[0.42em] opacity-45 sm:text-[10px]">
-                  Artist
-                </span>
+                    <h2 className="artist-name mt-5 max-w-full break-words font-serif text-[clamp(2.8rem,6vw,6.5rem)] font-normal leading-[0.88] tracking-[-0.055em]">
+                      {profile.name}
+                    </h2>
+
+                    {profile.tagline?.trim() && (
+                      <p className="mt-6 max-w-[680px] text-[11px] font-medium uppercase leading-[1.8] tracking-[0.28em] opacity-50 sm:text-xs lg:text-sm">
+                        {profile.tagline}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-10 max-w-[900px] text-base leading-[1.8] text-[var(--muted-foreground,#777)] sm:mt-14 sm:text-xl lg:text-2xl [&>p]:mb-7 [&>p:last-child]:mb-0 [&>h2]:mt-14 [&>h2]:mb-6 [&>h2]:font-serif [&>h2]:text-3xl [&>h2]:font-normal [&>h2]:leading-tight [&>h2]:tracking-[-0.02em] sm:[&>h2]:text-4xl lg:[&>h2]:text-5xl [&>h3]:mt-10 [&>h3]:mb-5 [&>h3]:font-serif [&>h3]:text-2xl [&>h3]:font-normal [&>h3]:leading-tight [&>h3]:tracking-[-0.02em] sm:[&>h3]:text-3xl lg:[&>h3]:text-4xl">
+                    <ReactMarkdown>
+                      {profile.hero_text?.replace(/^(#{1,6})(?=\S)/gm, "$1 ") || ""}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+
+                {/* Mobile-only artist image */}
+                <div
+                  data-reveal="hero-image"
+                  className={`mt-14 overflow-hidden rounded-[28px] transition-all duration-[1200ms] delay-150 ease-out sm:mt-20 sm:rounded-[38px] lg:hidden ${
+                    reveal("hero-image")
+                      ? "translate-y-0 scale-100 opacity-100"
+                      : "translate-y-12 scale-[0.97] opacity-0"
+                  }`}
+                >
+                  <ProtectedImage
+                    src={heroImage}
+                    alt={profile.name || "TboyArts artist"}
+                    className="block aspect-[4/5] w-full object-cover sm:aspect-[16/10]"
+                  />
+                </div>
+
+                {/* Desktop: Artwork titles as scroll triggers (NO "A selection of my work" heading) */}
+                <div className="hidden lg:block space-y-28 pb-40 pt-24">
+                  {artworks.map((artwork, i) => (
+                    <div
+                      key={artwork.id}
+                      data-index={i + 1}
+                      ref={(el) => { sectionRefs.current[i + 1] = el; }}
+                      className="group"
+                    >
+                      <Link to={`/shop?artwork=${artwork.id}`} className="block">
+                        <p className="mb-3 text-[10px] uppercase tracking-[0.25em] opacity-40">
+                          0{i + 1}
+                        </p>
+                        <h3 className="font-serif text-3xl leading-tight tracking-[-0.03em] transition-opacity group-hover:opacity-70 xl:text-4xl">
+                          {artwork.title ?? "Untitled"}
+                        </h3>
+                        <p className="mt-2 text-xs uppercase tracking-[0.15em] opacity-45">
+                          {artwork.category ?? "Artwork"}
+                        </p>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile: "A selection of my work" + grid (kept as-is) */}
+                <div className="lg:hidden">
+                  <div
+                    data-reveal="exhibition-heading"
+                    className={`mt-24 mb-14 transition-all duration-[900ms] sm:mt-32 sm:mb-20 ${
+                      reveal("exhibition-heading")
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-10 opacity-0"
+                    }`}
+                  >
+                    <p className="mb-6 text-[10px] uppercase tracking-[0.3em] opacity-50">
+                      01
+                    </p>
+                    <h2 className="font-serif text-[clamp(3.5rem,7vw,8rem)] leading-[0.88] tracking-[-0.06em]">
+                      A selection of my work
+                    </h2>
+                    <p className="mt-6 max-w-[360px] text-sm leading-[1.7] text-[var(--muted-foreground,#777)]">
+                      Selected Works
+                    </p>
+                  </div>
+
+                  {artworks.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 sm:gap-8">
+                      {artworks.map((artwork) => (
+                        <Link
+                          key={artwork.id}
+                          to={`/shop?artwork=${artwork.id}`}
+                          className="group"
+                        >
+                          <div className="overflow-hidden rounded-[24px] bg-[var(--surface,#f5f5f5)] sm:rounded-[30px]">
+                            <ProtectedImage
+                              src={artwork.image ?? ""}
+                              alt={artwork.title ?? "TboyArts artwork"}
+                              className="aspect-[4/5] w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                          <div className="mt-5 flex items-start justify-between gap-5">
+                            <div>
+                              <h3 className="text-lg font-medium tracking-[-0.02em] sm:text-xl">
+                                {artwork.title ?? "Untitled"}
+                              </h3>
+                              <p className="mt-1 text-xs uppercase tracking-[0.15em] opacity-45">
+                                {artwork.category ?? "Artwork"}
+                              </p>
+                            </div>
+                            <ArrowUpRight
+                              size={20}
+                              className="mt-1 shrink-0 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1"
+                            />
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="border-t border-[var(--border)] py-16 text-sm opacity-50">
+                      No exhibition artworks available yet.
+                    </div>
+                  )}
+                </div>
+
+                {/* Explore link */}
+                <div
+                  data-reveal="exhibition-link"
+                  className={`mt-14 transition-all duration-[900ms] sm:mt-20 ${
+                    reveal("exhibition-link")
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-8 opacity-0"
+                  }`}
+                >
+                  <Link
+                    to="/shop"
+                    className="inline-flex items-center gap-3 border-b border-[var(--foreground)] pb-3 text-sm transition-opacity hover:opacity-55"
+                  >
+                    Explore the collection
+                    <ArrowUpRight size={17} />
+                  </Link>
+                </div>
               </div>
 
-              <h2 className="artist-name mt-5 max-w-full break-words font-serif text-[clamp(2.8rem,6vw,6.5rem)] font-normal leading-[0.88] tracking-[-0.055em]">
-                {profile.name}
-              </h2>
-
-              {profile.tagline?.trim() && (
-                <p className="mt-6 max-w-[680px] text-[11px] font-medium uppercase leading-[1.8] tracking-[0.28em] opacity-50 sm:text-xs lg:text-sm">
-                  {profile.tagline}
-                </p>
-              )}
-            </div>
-
-            <div className="mt-10 max-w-[900px] text-base leading-[1.8] text-[var(--muted-foreground,#777)] sm:mt-14 sm:text-xl lg:text-2xl [&>p]:mb-7 [&>p:last-child]:mb-0 [&>h2]:mt-14 [&>h2]:mb-6 [&>h2]:font-serif [&>h2]:text-3xl [&>h2]:font-normal [&>h2]:leading-tight [&>h2]:tracking-[-0.02em] sm:[&>h2]:text-4xl lg:[&>h2]:text-5xl [&>h3]:mt-10 [&>h3]:mb-5 [&>h3]:font-serif [&>h3]:text-2xl [&>h3]:font-normal [&>h3]:leading-tight [&>h3]:tracking-[-0.02em] sm:[&>h3]:text-3xl lg:[&>h3]:text-4xl">
-              <ReactMarkdown>
-                {profile.hero_text?.replace(/^(#{1,6})(?=\S)/gm, "$1 ")}
-              </ReactMarkdown>
-            </div>
-
-          </div>
-
-          <div
-            data-reveal="hero-image"
-            className={`mt-14 overflow-hidden rounded-[28px] transition-all duration-[1200ms] delay-150 ease-out sm:mt-20 sm:rounded-[38px] lg:mt-24 lg:rounded-[44px] ${
-              reveal("hero-image")
-                ? "translate-y-0 scale-100 opacity-100"
-                : "translate-y-12 scale-[0.97] opacity-0"
-            }`}
-          >
-
-            <ProtectedImage
-              src={heroImage}
-              alt={
-                profile.name ||
-                "TboyArts artist"
-              }
-              className="block aspect-[4/5] w-full object-cover sm:aspect-[16/10]"
-            />
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* =====================================================
-          EXHIBITION
-          ===================================================== */}
-
-      <section className="px-6 py-20 sm:px-10 sm:py-28 lg:px-16 lg:py-36">
-
-        <div className="mx-auto max-w-[1500px]">
-
-          <div
-            data-reveal="exhibition-heading"
-            className={`mb-14 flex flex-col justify-between gap-8 transition-all duration-[900ms] sm:mb-20 sm:flex-row sm:items-end ${
-              reveal(
-                "exhibition-heading",
-              )
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
-          >
-
-            <div>
-
-              <p className="mb-6 text-[10px] uppercase tracking-[0.3em] opacity-50">
-                01
-              </p>
-
-              <h2 className="font-serif text-[clamp(3.5rem,7vw,8rem)] leading-[0.88] tracking-[-0.06em]">
-                A selection of my work
-              </h2>
-
-            </div>
-
-            <p className="max-w-[360px] text-sm leading-[1.7] text-[var(--muted-foreground,#777)]">
-              Selected Works
-            </p>
-
-          </div>
-
-
-          {artworks.length > 0 ? (
-
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:gap-10">
-
-              {artworks.map(
-                (artwork, index) => (
-
-                  <Link
-                    key={artwork.id}
-                    to={
-                      artwork.category
-                        ? `/shop?category=${encodeURIComponent(
-                            artwork.category,
-                          )}`
-                        : "/shop"
-                    }
-                    data-reveal={`exhibition-${index}`}
-                    className={`group block transition-all duration-[900ms] ease-out ${
-                      reveal(
-                        `exhibition-${index}`,
-                      )
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-12 opacity-0"
-                    }`}
-                    style={{
-                      transitionDelay: `${index * 120}ms`,
-                    }}
-                  >
-
-                    <div className="overflow-hidden rounded-[24px] bg-[var(--surface,#f5f5f5)] sm:rounded-[30px]">
-
+              {/* ========== RIGHT COLUMN (Sticky image – desktop only) ========== */}
+              <div className="relative hidden lg:block">
+                <div className="sticky top-28 h-[72vh] w-full overflow-hidden rounded-[32px] xl:rounded-[40px]">
+                  {stickyImages.map((img, i) => (
+                    <div
+                      key={i}
+                      className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        activeImage === i
+                          ? "opacity-100 scale-100"
+                          : "opacity-0 scale-[1.03]"
+                      }`}
+                    >
                       <ProtectedImage
-                        src={artwork.image ?? ""}
-                        alt={
-                          artwork.title ??
-                          "TboyArts artwork"
-                        }
-                        className="aspect-[4/5] w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
-                        loading="lazy"
-                        decoding="async"
+                        src={img.src}
+                        alt={img.alt}
+                        className="h-full w-full object-cover"
                       />
 
+                      {/* Overlay only when showing a selected artwork (not the artist photo) */}
+                      {!img.isArtist && (
+                        <>
+                          {/* Top-left tag */}
+                          <div className="absolute left-6 top-6">
+                            <span className="inline-flex items-center rounded-full bg-black/50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                              Selected Works
+                            </span>
+                          </div>
+
+                          {/* Bottom center title + category */}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-8 pb-8 pt-16 text-center">
+                            <h3 className="font-serif text-2xl text-white xl:text-3xl">
+                              {img.title || "Untitled"}
+                            </h3>
+                            {img.category && (
+                              <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/70">
+                                {img.category}
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
-
-
-                    <div className="mt-5 flex items-start justify-between gap-5">
-
-                      <div>
-
-                        <h3 className="text-lg font-medium tracking-[-0.02em] sm:text-xl">
-                          {artwork.title ??
-                            "Untitled"}
-                        </h3>
-
-                        <p className="mt-1 text-xs uppercase tracking-[0.15em] opacity-45">
-                          {artwork.category ??
-                            "Artwork"}
-                        </p>
-
-                      </div>
-
-
-                      <ArrowUpRight
-                        size={20}
-                        className="mt-1 shrink-0 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1"
-                      />
-
-                    </div>
-
-                  </Link>
-
-                ),
-              )}
+                  ))}
+                </div>
+              </div>
 
             </div>
-
-          ) : (
-
-            <div
-              data-reveal="exhibition-empty"
-              className="border-t border-[var(--border)] py-16 text-sm opacity-50"
-            >
-              No exhibition artworks
-              available yet.
-            </div>
-
-          )}
-
-
-          <div
-            data-reveal="exhibition-link"
-            className={`mt-14 transition-all duration-[900ms] sm:mt-20 ${
-              reveal(
-                "exhibition-link",
-              )
-                ? "translate-y-0 opacity-100"
-                : "translate-y-8 opacity-0"
-            }`}
-          >
-
-            <Link
-              to="/shop"
-              className="inline-flex items-center gap-3 border-b border-[var(--foreground)] pb-3 text-sm transition-opacity hover:opacity-55"
-            >
-              Explore the collection
-              <ArrowUpRight size={17} />
-            </Link>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      </main>
+          </section>
+        </main>
       )}
       <Footer />
     </>

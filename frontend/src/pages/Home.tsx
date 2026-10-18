@@ -9,7 +9,7 @@ import ArtistStory from "../components/home/ArtistStory";
 import HomeCTA from "../components/home/HomeCTA";
 import SEO from "../components/seo/SEO";
 import ErrorState from "../components/errors/ErrorState";
-import FeaturedAdvertisementModal from "../components/advertisements/FeaturedAdvertisementModal";
+//import FeaturedAdvertisementModal from "../components/advertisements/FeaturedAdvertisementModal";
 import HomeAdvertisement from "../components/advertisements/HomeAdvertisement";
 import ScrollReveal from "../components/animations/ScrollReveal";
 
@@ -75,7 +75,7 @@ export default function Home() {
 
       <Footer />
 
-      <FeaturedAdvertisementModal />
+      {/*<FeaturedAdvertisementModal /> */}
     </>
   );
 }

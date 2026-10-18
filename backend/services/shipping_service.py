@@ -1,5 +1,4 @@
 import os
-from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -8,54 +7,53 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SHIPBUBBLE_BASE_URL = "https://api.shipbubble.com/v1"
+TERMINAL_BASE_URL = os.getenv(
+    "TERMINAL_AFRICA_BASE_URL",
+    "https://api.terminal.africa/v1",
+).rstrip("/")
+
+_cached_pickup_id: str | None = None
+_cached_packaging_id: str | None = None
 
 
 class ShippingError(Exception):
     """A safe, user-facing shipping integration error."""
 
 
-def _configuration() -> tuple[str, str, str]:
-    api_key = os.getenv("SHIPBUBBLE_API_KEY", "").strip()
-    sender_code = os.getenv("SHIPBUBBLE_SENDER_ADDRESS_CODE", "").strip()
-    category_id = os.getenv("SHIPBUBBLE_CATEGORY_ID", "").strip()
-
-    missing = []
-    if not api_key:
-        missing.append("SHIPBUBBLE_API_KEY")
-    if not sender_code:
-        missing.append("SHIPBUBBLE_SENDER_ADDRESS_CODE")
-    if not category_id:
-        missing.append("SHIPBUBBLE_CATEGORY_ID")
-
-    if missing:
+def _secret_key() -> str:
+    secret = os.getenv("TERMINAL_AFRICA_SECRET_KEY", "").strip()
+    if not secret:
         raise ShippingError(
-            "Shipping is not configured yet. Missing server settings: "
-            + ", ".join(missing)
+            "Shipping is not configured yet. Missing TERMINAL_AFRICA_SECRET_KEY."
         )
+    return secret
 
-    return api_key, sender_code, category_id
 
-
-def _headers(api_key: str) -> dict[str, str]:
+def _headers(secret: str) -> dict[str, str]:
     return {
-        "Authorization": f"Bearer {api_key}",
+        "Authorization": f"Bearer {secret}",
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
 
 
-async def _post_shipbubble(
+async def _request(
+    method: str,
     endpoint: str,
-    api_key: str,
-    payload: dict[str, Any],
+    secret: str,
+    *,
+    json_body: dict[str, Any] | None = None,
+    params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    url = f"{TERMINAL_BASE_URL}{endpoint}"
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{SHIPBUBBLE_BASE_URL}{endpoint}",
-                headers=_headers(api_key),
-                json=payload,
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            response = await client.request(
+                method,
+                url,
+                headers=_headers(secret),
+                json=json_body,
+                params=params,
             )
     except httpx.TimeoutException as exc:
         raise ShippingError(
@@ -66,22 +64,22 @@ async def _post_shipbubble(
             "Unable to contact the shipping provider right now."
         ) from exc
 
-    if response.status_code >= 400:
-        try:
-            error_data = response.json()
-        except ValueError:
-            error_data = {}
+    try:
+        data = response.json()
+    except ValueError:
+        data = {}
 
+    if response.status_code >= 400:
         message = ""
-        if isinstance(error_data, dict):
+        if isinstance(data, dict):
             for key in ("message", "error", "detail"):
-                value = error_data.get(key)
-                if isinstance(value, str):
-                    message = value[:300]
+                value = data.get(key)
+                if isinstance(value, str) and value.strip():
+                    message = value.strip()[:300]
                     break
 
         print(
-            "SHIPBUBBLE REQUEST FAILED:",
+            "TERMINAL AFRICA REQUEST FAILED:",
             {
                 "endpoint": endpoint,
                 "status": response.status_code,
@@ -89,22 +87,189 @@ async def _post_shipbubble(
             },
         )
         raise ShippingError(
-            f"The shipping provider rejected the request (HTTP {response.status_code})."
+            message
+            or f"The shipping provider rejected the request (HTTP {response.status_code})."
         )
 
-    try:
-        result = response.json()
-    except ValueError as exc:
-        raise ShippingError(
-            "The shipping provider returned an invalid response."
-        ) from exc
+    if not isinstance(data, dict):
+        raise ShippingError("The shipping provider returned an invalid response.")
 
-    if not isinstance(result, dict) or result.get("status") != "success":
+    if data.get("status") is False:
         raise ShippingError(
-            "The shipping provider could not process this request."
+            str(data.get("message") or "The shipping provider could not process this request.")
         )
 
-    return result
+    return data
+
+
+async def _get_pickup_address_id(secret: str) -> str:
+    global _cached_pickup_id
+
+    env_id = os.getenv("TERMINAL_AFRICA_PICKUP_ADDRESS_ID", "").strip()
+    if env_id:
+        return env_id
+
+    if _cached_pickup_id:
+        return _cached_pickup_id
+
+    for endpoint in ("/addresses/default/sender", "/default/sender"):
+        try:
+            result = await _request("GET", endpoint, secret)
+            data = result.get("data") or {}
+            address_id = str(data.get("address_id") or data.get("id") or "").strip()
+            if address_id:
+                _cached_pickup_id = address_id
+                return address_id
+        except ShippingError:
+            continue
+
+    result = await _request(
+        "GET",
+        "/addresses",
+        secret,
+        params={"perPage": 50, "page": 1},
+    )
+    data = result.get("data") or {}
+    addresses = data.get("addresses") if isinstance(data, dict) else None
+    if not isinstance(addresses, list):
+        addresses = data if isinstance(data, list) else []
+
+    chosen = None
+    for addr in addresses:
+        if isinstance(addr, dict) and addr.get("sender_default") is True:
+            chosen = addr
+            break
+    if chosen is None and addresses and isinstance(addresses[0], dict):
+        chosen = addresses[0]
+
+    if not chosen:
+        raise ShippingError(
+            "No pickup address found on your Terminal Africa account. "
+            "Add a sender address in the Terminal dashboard."
+        )
+
+    address_id = str(chosen.get("address_id") or chosen.get("id") or "").strip()
+    if not address_id:
+        raise ShippingError("Could not read pickup address id from Terminal Africa.")
+
+    _cached_pickup_id = address_id
+    return address_id
+
+
+async def _get_packaging_id(secret: str) -> str:
+    global _cached_packaging_id
+
+    env_id = os.getenv("TERMINAL_AFRICA_PACKAGING_ID", "").strip()
+    if env_id:
+        return env_id
+
+    if _cached_packaging_id:
+        return _cached_packaging_id
+
+    result = await _request(
+        "GET",
+        "/packaging",
+        secret,
+        params={"perPage": 50, "page": 1},
+    )
+    data = result.get("data") or {}
+    packaging_list = data.get("packaging") if isinstance(data, dict) else None
+    if not isinstance(packaging_list, list):
+        packaging_list = data if isinstance(data, list) else []
+
+    box = None
+    first = None
+    for pkg in packaging_list:
+        if not isinstance(pkg, dict):
+            continue
+        if first is None:
+            first = pkg
+        if "box" in str(pkg.get("type") or "").lower():
+            box = pkg
+            break
+
+    chosen = box or first
+    if chosen:
+        packaging_id = str(chosen.get("packaging_id") or chosen.get("id") or "").strip()
+        if packaging_id:
+            _cached_packaging_id = packaging_id
+            return packaging_id
+
+    created = await _request(
+        "POST",
+        "/packaging",
+        secret,
+        json_body={
+            "name": "TboyArts Artwork Box",
+            "type": "box",
+            "height": 15,
+            "width": 50,
+            "length": 70,
+            "size_unit": "cm",
+            "weight": 0.5,
+            "weight_unit": "kg",
+        },
+    )
+    created_data = created.get("data") or {}
+    packaging_id = str(
+        created_data.get("packaging_id") or created_data.get("id") or ""
+    ).strip()
+    if not packaging_id:
+        raise ShippingError(
+            "No packaging found on Terminal Africa and could not create one."
+        )
+
+    _cached_packaging_id = packaging_id
+    return packaging_id
+
+
+def _split_name(full_name: str) -> tuple[str, str]:
+    parts = [p for p in full_name.strip().split() if p]
+    if not parts:
+        return "Customer", "Customer"
+    if len(parts) == 1:
+        return parts[0], parts[0]
+    return parts[0], " ".join(parts[1:])
+
+
+def _parse_address_line(address: str) -> dict[str, str]:
+    parts = [p.strip() for p in address.split(",") if p.strip()]
+    country = "NG"
+    state = "Lagos"
+    city = "Lagos"
+    line1 = address.strip() or "Address"
+
+    if len(parts) >= 4:
+        line1 = parts[0]
+        city = parts[-3]
+        state = parts[-2]
+        country_raw = parts[-1]
+        country = country_raw[:2].upper() if len(country_raw) == 2 else country_raw
+    elif len(parts) == 3:
+        line1, city, state = parts[0], parts[1], parts[2]
+    elif len(parts) == 2:
+        line1, city = parts[0], parts[1]
+        state = parts[1]
+
+    country_map = {
+        "NIGERIA": "NG",
+        "UNITED STATES": "US",
+        "USA": "US",
+        "UK": "GB",
+        "UNITED KINGDOM": "GB",
+        "UAE": "AE",
+        "UNITED ARAB EMIRATES": "AE",
+    }
+    country_up = country.upper()
+    country = country_map.get(country_up, country_up if len(country_up) == 2 else "NG")
+
+    return {
+        "line1": line1[:200],
+        "city": (city or "Lagos")[:100],
+        "state": (state or "Lagos")[:100],
+        "country": country,
+        "zip": "100001",
+    }
 
 
 async def validate_delivery_address(
@@ -114,147 +279,185 @@ async def validate_delivery_address(
     phone: str,
     address: str,
 ) -> dict[str, Any]:
-    api_key, _, _ = _configuration()
+    secret = _secret_key()
+    first_name, last_name = _split_name(name)
+    parsed = _parse_address_line(address)
 
-    result = await _post_shipbubble(
-        "/shipping/address/validate",
-        api_key,
-        {
-            "name": name,
-            "email": email,
-            "phone": phone,
-            "address": address,
-        },
-    )
+    payload = {
+        "first_name": first_name,
+        "last_name": last_name,
+        "name": name.strip(),
+        "email": email.strip(),
+        "phone": phone.strip(),
+        "line1": parsed["line1"],
+        "city": parsed["city"],
+        "state": parsed["state"],
+        "country": parsed["country"],
+        "zip": parsed["zip"],
+        "is_residential": True,
+    }
 
-    data = result.get("data")
-    if not isinstance(data, dict) or not data.get("address_code"):
+    result = await _request("POST", "/addresses", secret, json_body=payload)
+    data = result.get("data") or {}
+
+    address_id = str(data.get("address_id") or data.get("id") or "").strip()
+    if not address_id:
         raise ShippingError(
             "The shipping provider could not verify this delivery address. "
             "Please check the address and try again."
         )
 
-    # Return only the fields needed by checkout.
+    formatted = data.get("formatted_address") or ", ".join(
+        p for p in [parsed["line1"], parsed["city"], parsed["state"], parsed["country"]] if p
+    )
+
     return {
-        "address_code": data["address_code"],
-        "formatted_address": data.get("formatted_address") or address,
-        "country": data.get("country"),
-        "country_code": data.get("country_code"),
-        "city": data.get("city"),
-        "state": data.get("state"),
-        "postal_code": data.get("postal_code"),
+        "address_code": address_id,
+        "formatted_address": formatted,
+        "country": data.get("country") or parsed["country"],
+        "country_code": data.get("country") or parsed["country"],
+        "city": data.get("city") or parsed["city"],
+        "state": data.get("state") or parsed["state"],
+        "postal_code": data.get("zip") or parsed["zip"],
     }
+
+
+async def _create_parcel(
+    secret: str,
+    packaging_id: str,
+    package_items: list[dict[str, Any]],
+) -> str:
+    items = []
+    for item in package_items:
+        try:
+            weight_f = float(item.get("unit_weight") or item.get("weight") or 1)
+        except (TypeError, ValueError):
+            weight_f = 1.0
+        try:
+            value_f = float(item.get("unit_amount") or item.get("value") or 1000)
+        except (TypeError, ValueError):
+            value_f = 1000.0
+
+        items.append({
+            "name": str(item.get("name") or "Artwork")[:120],
+            "description": str(item.get("description") or item.get("name") or "Artwork")[:250],
+            "weight": max(weight_f, 0.1),
+            "quantity": int(item.get("quantity") or 1),
+            "value": max(value_f, 1),
+            "currency": "NGN",
+        })
+
+    if not items:
+        raise ShippingError("There are no package items to ship.")
+
+    total_weight = sum(i["weight"] * i["quantity"] for i in items)
+
+    result = await _request(
+        "POST",
+        "/parcels",
+        secret,
+        json_body={
+            "description": "TboyArts artwork shipment",
+            "items": items,
+            "packaging": packaging_id,
+            "weight_unit": "kg",
+            "weight": round(total_weight, 3),
+        },
+    )
+    data = result.get("data") or {}
+    parcel_id = str(data.get("parcel_id") or data.get("id") or "").strip()
+    if not parcel_id:
+        raise ShippingError("Unable to create parcel for shipping rates.")
+    return parcel_id
 
 
 async def fetch_shipping_rates(
     *,
-    receiver_address_code: int,
+    receiver_address_code: str | int,
     package_items: list[dict[str, Any]],
     package_dimension: dict[str, int],
     delivery_instructions: str = "",
 ) -> dict[str, Any]:
-    api_key, sender_code, category_id = _configuration()
+    secret = _secret_key()
+    pickup_id = await _get_pickup_address_id(secret)
+    packaging_id = await _get_packaging_id(secret)
 
-    if receiver_address_code <= 0:
+    delivery_id = str(receiver_address_code).strip()
+    if not delivery_id:
         raise ShippingError("A valid delivery address is required.")
 
     if not package_items:
         raise ShippingError("There are no package items to ship.")
 
-    required_dimensions = {"length", "width", "height"}
-    if set(package_dimension) != required_dimensions:
-        raise ShippingError(
-            "Package length, width, and height are required."
-        )
+    parcel_id = await _create_parcel(secret, packaging_id, package_items)
 
-    if any(
-        not isinstance(package_dimension[key], int)
-        or package_dimension[key] <= 0
-        for key in required_dimensions
-    ):
-        raise ShippingError(
-            "Package dimensions must be positive whole numbers in centimetres."
-        )
-
-    payload: dict[str, Any] = {
-        "sender_address_code": int(sender_code),
-        "reciever_address_code": receiver_address_code,
-        "pickup_date": (date.today() + timedelta(days=1)).isoformat(),
-        "category_id": int(category_id),
-        "package_items": package_items,
-        "package_dimension": package_dimension,
-    }
-
-    if delivery_instructions.strip():
-        payload["delivery_instructions"] = delivery_instructions.strip()[:500]
-
-    result = await _post_shipbubble(
-        "/shipping/fetch_rates",
-        api_key,
-        payload,
+    result = await _request(
+        "GET",
+        "/rates/shipment",
+        secret,
+        params={
+            "pickup_address": pickup_id,
+            "delivery_address": delivery_id,
+            "parcel_id": parcel_id,
+            "currency": "NGN",
+        },
     )
 
-    data = result.get("data")
-    if not isinstance(data, dict):
-        raise ShippingError("The shipping provider returned no rate data.")
-
-    couriers = data.get("couriers")
-    request_token = data.get("request_token")
-
-    if not isinstance(couriers, list) or not request_token:
+    rates = result.get("data")
+    if not isinstance(rates, list) or not rates:
         raise ShippingError("No valid shipping quotes were returned.")
 
-    # Only expose validated quote fields needed by checkout.
     safe_couriers = []
+    request_token = ""
 
-    for courier in couriers:
-        if not isinstance(courier, dict):
+    for rate in rates:
+        if not isinstance(rate, dict):
             continue
 
-        courier_id = str(courier.get("courier_id") or "").strip()
-        courier_name = str(courier.get("courier_name") or "").strip()
-        service_code = str(courier.get("service_code") or "").strip()
+        rate_id = str(rate.get("rate_id") or rate.get("id") or "").strip()
+        carrier_name = str(rate.get("carrier_name") or "").strip()
+        carrier_slug = str(
+            rate.get("carrier_slug")
+            or rate.get("carrier_reference")
+            or rate.get("carrier_id")
+            or rate_id
+        ).strip()
 
-        if not courier_id or not courier_name or not service_code:
+        if not rate_id or not carrier_name:
             continue
-
-        raw_amount = courier.get("rate_card_amount")
-        if raw_amount is None:
-            raw_amount = courier.get("total")
 
         try:
-            amount_decimal = Decimal(str(raw_amount))
+            amount_decimal = Decimal(str(rate.get("amount")))
         except (InvalidOperation, TypeError, ValueError):
             continue
 
         if not amount_decimal.is_finite() or amount_decimal < 0:
             continue
 
-        raw_currency = str(
-            courier.get("rate_card_currency")
-            or courier.get("currency")
-            or "NGN"
-        ).strip().upper()
+        currency = str(rate.get("currency") or "NGN").strip().upper()
+        if len(currency) != 3 or not currency.isalpha():
+            currency = "NGN"
 
-        if len(raw_currency) != 3 or not raw_currency.isalpha():
-            continue
+        if not request_token:
+            request_token = rate_id
 
         safe_couriers.append({
-            "courier_id": courier_id,
-            "courier_name": courier_name[:150],
-            "service_code": service_code,
-            "service_type": str(courier.get("service_type") or "")[:100],
+            "courier_id": carrier_slug[:100],
+            "courier_name": carrier_name[:150],
+            "service_code": rate_id[:100],
+            "service_type": str(rate.get("type") or rate.get("cargo_type") or "")[:100],
             "rate_card_amount": float(amount_decimal),
-            "currency": raw_currency,
-            "pickup_eta": courier.get("pickup_eta"),
-            "delivery_eta": courier.get("delivery_eta"),
-            "tracking_level": courier.get("tracking_level"),
+            "currency": currency,
+            "pickup_eta": rate.get("pickup_time") or rate.get("pickup_eta"),
+            "delivery_eta": rate.get("delivery_time") or rate.get("delivery_eta"),
+            "tracking_level": "",
         })
 
     if not safe_couriers:
         raise ShippingError("No usable shipping quotes were returned.")
 
     return {
-        "request_token": str(request_token),
+        "request_token": request_token or "terminal",
         "couriers": safe_couriers,
+        "delivery_instructions": delivery_instructions.strip()[:500],
     }

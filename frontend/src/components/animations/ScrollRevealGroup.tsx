@@ -11,7 +11,7 @@ type ScrollRevealGroupProps = {
 export default function ScrollRevealGroup({
   children,
   className,
-  amount = 0.2,
+  amount = 0.12,
   delay = 0,
   ...props
 }: ScrollRevealGroupProps) {
@@ -21,15 +21,16 @@ export default function ScrollRevealGroup({
       initial="hidden"
       whileInView="visible"
       viewport={{
-        once: false,
+        once: true,
         amount,
+        margin: "0px 0px -30px 0px",
       }}
       variants={{
         hidden: {},
         visible: {
           transition: {
             delayChildren: delay,
-            staggerChildren: 0.12,
+            staggerChildren: 0.08,
           },
         },
       }}
