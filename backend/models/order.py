@@ -22,7 +22,7 @@ class CartItemRequest(BaseModel):
 class CreateOrderRequest(BaseModel):
     customer: CustomerDetails
     items: List[CartItemRequest] = Field(min_length=1)
-    receiver_address_code: str = Field(gt=0)
+    receiver_address_code: str = Field(min_length=1, max_length=80)
     shipping_courier_id: str = Field(min_length=1, max_length=100)
     shipping_service_code: str = Field(min_length=1, max_length=100)
     shipping_rate_amount: Decimal = Field(ge=0)
