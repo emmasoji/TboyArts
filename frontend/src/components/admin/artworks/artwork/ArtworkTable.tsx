@@ -305,8 +305,11 @@ export default function ArtworkTable() {
         featured:
           Boolean(data.featured),
 
-        is_newest_drop:
-          Boolean(data.is_newest_drop),
+        is_newest_drop: Boolean(data.is_newest_drop),
+
+        newest_drop_header: data.is_newest_drop
+          ? (data.newest_drop_header || "").trim() || null
+          : null,
         
         status:
           data.status || "available",
@@ -383,8 +386,11 @@ export default function ArtworkTable() {
           featured:
             Boolean(data.featured),
           
-          is_newest_drop:
-            Boolean(data.is_newest_drop),
+          is_newest_drop: Boolean(data.is_newest_drop),
+
+          newest_drop_header: data.is_newest_drop
+            ? (data.newest_drop_header || "").trim() || null
+            : null,
 
           status:
             data.status ||

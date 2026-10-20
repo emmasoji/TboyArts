@@ -82,14 +82,15 @@ export default function HomeAdvertisement() {
   }
 
   const active = drops[current];
+  const headerText = (active?.newest_drop_header || "").trim() || "New Drop";
 
   return (
     <section className="w-full bg-[var(--background)] px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24">
       <div className="mx-auto w-full max-w-[1800px]">
         <div className="mb-6 flex items-end justify-between gap-4 sm:mb-8">
           <div>
-            <p className="home-eyebrow home-theme-muted">
-              New Drop
+            <p className="home-eyebrow home-theme-muted uppercase">
+              {headerText}
             </p>
           </div>
         </div>

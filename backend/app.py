@@ -42,6 +42,7 @@ app.add_exception_handler(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost:5173/",
         "https://tboyarts.netlify.app",
         "https://tboyarts.shop",
         "https://www.tboyarts.shop",

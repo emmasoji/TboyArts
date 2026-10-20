@@ -13,6 +13,7 @@ export interface Artwork {
   image: string | null;
   featured: boolean | null;
   is_newest_drop: boolean | null;
+  newest_drop_header?: string | null;
   status: string | null;
   created_at: string;
   updated_at: string | null;

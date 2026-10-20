@@ -29,6 +29,7 @@ export interface ArtworkFormData {
   image: string;
   featured: boolean;
   is_newest_drop: boolean;   // ← add this
+  newest_drop_header: string;
   status: string;
   customer_visible: boolean;
 }
@@ -60,6 +61,7 @@ const emptyForm: ArtworkFormData = {
   image: "",
   featured: false,
   is_newest_drop: false,   // ← add this
+  newest_drop_header: "",
   status: "available",
   customer_visible: true,
 };
@@ -1470,31 +1472,48 @@ export default function ArtworkFormModal({
 
                   </label>
 
-                  <label className="
-  flex items-center justify-between gap-4
-  rounded-xl border border-white/10
-  p-4
-  transition
-  hover:bg-white/[0.04]
-">
-  <div>
-    <p className="text-sm font-medium">
-      Newest Drop
-    </p>
-    <p className="mt-1 text-xs text-white/30">
-      Show this artwork in the New Drops section on the homepage.
-    </p>
-  </div>
+                  <div className="space-y-3">
+  <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 p-4 transition hover:bg-white/[0.04]">
+    <div>
+      <p className="text-sm font-medium">Newest Drop</p>
+      <p className="mt-1 text-xs text-white/30">
+        Show this artwork in the New Drops section on the homepage.
+      </p>
+    </div>
+    <input
+      type="checkbox"
+      checked={Boolean(form.is_newest_drop)}
+      onChange={(event) => {
+        updateField("is_newest_drop", event.target.checked);
+        if (!event.target.checked) {
+          updateField("newest_drop_header", "");
+        }
+      }}
+      className="h-5 w-5 accent-white"
+    />
+  </label>
 
-  <input
-    type="checkbox"
-    checked={Boolean(form.is_newest_drop)}
-    onChange={(event) =>
-      updateField("is_newest_drop", event.target.checked)
-    }
-    className="h-5 w-5 accent-white"
-  />
-</label>
+  {form.is_newest_drop && (
+    <div className="rounded-xl border border-white/10 p-4">
+      <label className="block text-xs font-medium uppercase tracking-[0.2em] text-white/40">
+        Drop header
+      </label>
+      <input
+        type="text"
+        value={form.newest_drop_header || ""}
+        onChange={(e) =>
+          updateField("newest_drop_header", e.target.value)
+        }
+        placeholder="e.g. Week 12 Drop · Limited pieces"
+        maxLength={80}
+        className="mt-3 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2.5 text-sm outline-none focus:border-white/30"
+      />
+      <p className="mt-2 text-[11px] text-white/30">
+        This header shows above the New Drop on the homepage and changes as drops scroll.
+      </p>
+    </div>
+  )}
+</div>
 
                 </div>
 
