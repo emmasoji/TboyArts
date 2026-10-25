@@ -102,7 +102,7 @@ export default function HomeAdvertisement() {
           className="group relative block w-full overflow-hidden rounded-3xl text-left outline-none"
           aria-label={`View drop: ${active.title || "New artwork"}`}
         >
-          <div className="relative aspect-[16/10] w-full overflow-hidden sm:aspect-[16/9] lg:aspect-[21/9]">
+          <div className="relative aspect-[4/5] w-full overflow-hidden sm:aspect-[3/4] lg:aspect-[4/5] max-h-[85vh]">
             {drops.map((drop, i) => (
               <div
                 key={drop.id}
