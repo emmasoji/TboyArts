@@ -47,7 +47,7 @@ export default function HomeAdvertisement() {
 
     timerRef.current = window.setInterval(() => {
       setCurrent((prev) => (prev + 1) % drops.length);
-    }, 4500);
+    }, 5000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -61,7 +61,7 @@ export default function HomeAdvertisement() {
     if (drops.length > 1) {
       timerRef.current = window.setInterval(() => {
         setCurrent((prev) => (prev + 1) % drops.length);
-      }, 4500);
+      }, 5000);
     }
   };
 
@@ -106,11 +106,9 @@ export default function HomeAdvertisement() {
             {drops.map((drop, i) => (
               <div
                 key={drop.id}
-                className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  i === current
-                    ? "opacity-100 scale-100"
-                    : "opacity-0 scale-[1.03]"
-                }`}
+                className={`absolute inset-0 transition-opacity duration-[1100ms] ease-in-out ${
+  i === current ? "opacity-100" : "opacity-0"
+}`}
               >
                 <ProtectedImage
                   src={drop.image ?? ""}
@@ -123,10 +121,12 @@ export default function HomeAdvertisement() {
             {/* Overlay info */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 lg:p-14">
-              <h3 className="mt-2 max-w-2xl font-serif text-2xl text-white sm:text-3xl lg:text-5xl">
-                {active.title || "Untitled"}
-              </h3>
+            <div  key={active.id}
+  className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 lg:p-14 animate-[fadeIn_500ms_ease-out]"
+>
+  <h3 className="mt-2 max-w-2xl font-serif text-2xl text-white sm:text-3xl lg:text-5xl">
+    {active.title || "Untitled"}
+  </h3>
               {active.category && (
                 <p className="mt-2 text-sm text-white/60">
                   {active.category}

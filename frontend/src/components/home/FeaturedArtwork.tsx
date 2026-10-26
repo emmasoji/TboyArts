@@ -342,21 +342,16 @@ export default function FeaturedArtwork({
                           )
                         `,
                         opacity:
-                          Math.abs(
-                            normalizedOffset,
-                          ) > 1
-                            ? 0
-                            : isActive
-                              ? 1
-                              : 0.55,
-                        zIndex:
-                          isActive
-                            ? 10
-                            : 5 -
-                              Math.abs(
-                                normalizedOffset,
-                              ),
-                      }}
+    Math.abs(normalizedOffset) > 1
+      ? 0
+      : isActive
+        ? 1
+        : 0.55,
+  zIndex: isActive ? 10 : 5 - Math.abs(normalizedOffset),
+  transition:
+    "transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease-in-out",
+  willChange: "transform, opacity",
+}}
                     >
 
                       <div className="featured-interactive-image-wrap">

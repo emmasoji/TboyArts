@@ -31,7 +31,7 @@ function ArtworkCard({
 
         <Link
           to={shopUrl}
-          className="group absolute inset-0 block"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
           aria-label={`View ${artwork.title ?? "artwork"}`}
         >
           <ProtectedImage
@@ -69,7 +69,7 @@ function ArtworkCard({
 
 function NewArrivalsSkeleton() {
   return (
-    <section className="w-full overflow-hidden py-20">
+    <section className="w-full overflow-x-hidden overflow-y-visible py-20">
       {/* HEADER */}
 
       <div className="mx-auto mb-12 flex max-w-[1600px] items-end justify-between gap-6 px-6 sm:px-10 lg:px-16">
@@ -105,7 +105,7 @@ function NewArrivalsSkeleton() {
 
       {/* MARQUEE */}
 
-      <div className="relative flex w-full justify-center overflow-hidden">
+      <div className="relative flex w-full justify-center overflow-x-hidden overflow-y-visible pt-6 pb-4 sm:pt-8 sm:pb-5 lg:pt-10 lg:pb-6 min-h-[400px] sm:min-h-[460px] lg:min-h-[520px]">
         <div className="new-arrivals-marquee flex w-max items-center">
           {Array.from({ length: 3 }).map((_, groupIndex) => (
             <div
@@ -232,79 +232,57 @@ export default function NewArrivals({
    * CENTER CARD EFFECT
    */
 
-  useEffect(() => {
-    if (artworks.length === 0) {
-      return;
+useEffect(() => {
+  if (artworks.length === 0) {
+    return;
+  }
+
+  let frame = 0;
+  let lastCenter: HTMLDivElement | null = null;
+
+  const updateCenterCard = () => {
+    const screenCenter = window.innerWidth / 2;
+
+    let closestCard: HTMLDivElement | null = null;
+    let closestDistance = Infinity;
+
+    cardRefs.current.forEach((card) => {
+      if (!card) return;
+
+      const rect = card.getBoundingClientRect();
+      const cardCenter = rect.left + rect.width / 2;
+      const distance = Math.abs(cardCenter - screenCenter);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestCard = card;
+      }
+    });
+
+    // Only touch the DOM when the center card actually changes
+    if (closestCard !== lastCenter) {
+      lastCenter = closestCard;
+
+      cardRefs.current.forEach((card) => {
+        if (!card) return;
+
+        if (card === closestCard) {
+          card.classList.add("is-center");
+        } else {
+          card.classList.remove("is-center");
+        }
+      });
     }
 
-    let frame = 0;
+    frame = requestAnimationFrame(updateCenterCard);
+  };
 
-    const updateCenterCard = () => {
-      const screenCenter =
-        window.innerWidth / 2;
+  frame = requestAnimationFrame(updateCenterCard);
 
-      let closestCard:
-        | HTMLDivElement
-        | null = null;
-
-      let closestDistance =
-        Infinity;
-
-      cardRefs.current.forEach(
-        (card) => {
-          if (!card) return;
-
-          const rect =
-            card.getBoundingClientRect();
-
-          const cardCenter =
-            rect.left +
-            rect.width / 2;
-
-          const distance =
-            Math.abs(
-              cardCenter -
-                screenCenter,
-            );
-
-          if (
-            distance <
-            closestDistance
-          ) {
-            closestDistance =
-              distance;
-
-            closestCard =
-              card;
-          }
-        },
-      );
-      
-      cardRefs.current.forEach((card) => {
-  if (!card) return;
-
-  if (card === closestCard) {
-    card.classList.add("is-center");
-  } else {
-    card.classList.remove("is-center");
-  }
-});
-
-      frame =
-        requestAnimationFrame(
-          updateCenterCard,
-        );
-    };
-
-    frame =
-      requestAnimationFrame(
-        updateCenterCard,
-      );
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [artworks]);
+  return () => {
+    cancelAnimationFrame(frame);
+  };
+}, [artworks]);
 
   if (loading) {
     return <NewArrivalsSkeleton />;
@@ -330,7 +308,7 @@ export default function NewArrivals({
   ];
 
   return (
-    <section className="w-full overflow-hidden py-20">
+    <section className="w-full overflow-x-hidden overflow-y-visible py-20">
       {/* HEADER */}
 
       <div className="mx-auto mb-12 flex max-w-[1600px] items-end justify-between gap-6 px-6 sm:px-10 lg:px-16">
@@ -355,13 +333,13 @@ export default function NewArrivals({
 
       {/* MARQUEE */}
 
-      <div className="relative flex w-full justify-center overflow-hidden">
+      <div className="relative flex w-full justify-center overflow-x-hidden overflow-y-visible pt-6 pb-4 sm:pt-8 sm:pb-5 lg:pt-10 lg:pb-6 min-h-[400px] sm:min-h-[460px] lg:min-h-[520px]">
         <div className="new-arrivals-marquee flex w-max items-center">
           {groups.map(
             (group, groupIndex) => (
               <div
                 key={groupIndex}
-                className="new-arrivals-group flex items-center"
+                className="new-arrivals-group flex items-end"
               >
                 {group.map(
                   (artwork) => (
