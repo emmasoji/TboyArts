@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ErrorState from "../../errors/ErrorState";
 import { supabase } from "../../../lib/supabase";
+import { useAdminToast } from "../../../contexts/AdminToastContext";
 
 interface Artwork {
   id: string;
@@ -19,6 +20,7 @@ export default function SelectedWorksManagement() {
   const [error, setError] = useState("");
   const [loadError, setLoadError] =
     useState<string | null>(null);
+  const toast = useAdminToast();
 
   useEffect(() => {
     loadArtworks();
@@ -96,8 +98,9 @@ export default function SelectedWorksManagement() {
       }
 
       setMessage("Selected works saved successfully.");
+      toast.success("Saved successfully");
     } catch (err) {
-      console.error(err);
+      toast.error("Failed to save");
 
       setError(
         err instanceof Error

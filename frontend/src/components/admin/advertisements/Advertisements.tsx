@@ -14,7 +14,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-
+import { useAdminToast } from "../../../contexts/AdminToastContext";
 import {
   addAdvertisementProduct,
   createAdvertisement,
@@ -74,7 +74,7 @@ export default function Advertisements() {
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectorSearch, setSelectorSearch] = useState("");
   const [selectorCategory, setSelectorCategory] = useState("all");
-
+  const toast = useAdminToast();
   const [expandedProducts, setExpandedProducts] = useState<
     Record<string, boolean>
   >({});
@@ -447,9 +447,11 @@ export default function Advertisements() {
 
       await loadData();
       closeEditor();
+      toast.success("Saved successfully");
     } catch (err) {
       console.error("Failed to save advertisement:", err);
-
+      toast.error("Failed to save");
+      
       if (err && typeof err === "object") {
         const supabaseError = err as {
           message?: string;
@@ -509,8 +511,10 @@ export default function Advertisements() {
           "Advertisement deleted, but its banner could not be removed from Storage. Check the console for details.",
         );
       }
+      toast.success("Deleted successfully");
     } catch (err) {
       console.error("Failed to delete advertisement:", err);
+      toast.error("Failed to delete");
       setError(
         err instanceof Error
           ? err.message

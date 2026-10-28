@@ -11,7 +11,7 @@ import { supabase } from "../../../lib/supabase";
 import API_URL from "../../../config/api";
 import { convertImageWithFreeConvert, getImageFileExtension } from "../../../utils/convertImageWithFreeConvert";
 import ErrorState from "../../errors/ErrorState";
-
+import { useAdminToast } from "../../../contexts/AdminToastContext";
 import {
   getArtistProfile,
   updateArtistProfile,
@@ -70,6 +70,8 @@ export default function ArtistManagement() {
       profile_image: null,
       updated_at: "",
     });
+
+  const toast = useAdminToast();
 
 
 
@@ -328,9 +330,9 @@ export default function ArtistManagement() {
       clearSelectedImage();
 
       setMessage("Artist profile saved successfully.");
-      await loadArtist();
+      toast.success("Saved successfully");
     } catch (err) {
-      console.error(err);
+      toast.error("Failed to save");
 
       setError(
         err instanceof Error

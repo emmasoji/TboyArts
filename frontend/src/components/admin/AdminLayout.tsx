@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-
+import { AdminToastProvider } from "../../contexts/AdminToastContext";
+import AdminToast from "./AdminToast";
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
 import Dashboard from "./dashboard/Dashboard";
@@ -90,66 +91,70 @@ export default function AdminLayout() {
   };
 
   return (
-    <div
-      className={[
-        "admin-layout",
-        "min-h-screen",
-        "transition-colors duration-300",
-        isLight
-          ? "bg-[#e7e5e0] text-neutral-950"
-          : "bg-[#0a0a0a] text-white",
-      ].join(" ")}
-    >
-      <AdminSidebar
-        open={sidebarOpen}
-        activeSection={section}
-        onNavigate={(nextSection) => {
-          setSection(nextSection);
-          localStorage.setItem("tboyarts-admin-section", nextSection);
-          setSidebarOpen(false);
-        }}
-        onClose={() => setSidebarOpen(false)}
-      />
-
-      <main
+    <AdminToastProvider>
+      <div
         className={[
-          "h-screen",
-          "min-h-0",
-          "min-w-0",
-          "w-full",
-          "flex-1",
-          "flex",
-          "flex-col",
-          "overflow-hidden",
-          "lg:ml-64",
+          "admin-layout",
+          "min-h-screen",
           "transition-colors duration-300",
           isLight
-            ? "bg-[#e7e5e0]"
-            : "bg-[#0a0a0a]",
+            ? "bg-[#e7e5e0] text-neutral-950"
+            : "bg-[#0a0a0a] text-white",
         ].join(" ")}
       >
-        <AdminHeader
-          section={section}
-          onMenuClick={() => setSidebarOpen(true)}
+        <AdminSidebar
+          open={sidebarOpen}
+          activeSection={section}
+          onNavigate={(nextSection) => {
+            setSection(nextSection);
+            localStorage.setItem("tboyarts-admin-section", nextSection);
+            setSidebarOpen(false);
+          }}
+          onClose={() => setSidebarOpen(false)}
         />
 
-        <div
+        <main
           className={[
-            "relative min-h-0 min-w-0 w-full max-w-full flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 py-6 sm:px-8 sm:py-8",
+            "h-screen",
+            "min-h-0",
+            "min-w-0",
+            "w-full",
+            "flex-1",
+            "flex",
+            "flex-col",
+            "overflow-hidden",
+            "lg:ml-64",
             "transition-colors duration-300",
             isLight
-              ? "text-neutral-950"
-              : "text-white",
+              ? "bg-[#e7e5e0]"
+              : "bg-[#0a0a0a]",
           ].join(" ")}
         >
+          <AdminHeader
+            section={section}
+            onMenuClick={() => setSidebarOpen(true)}
+          />
+
           <div
-            key={section}
-            className="tboyarts-slide-in-left"
+            className={[
+              "relative min-h-0 min-w-0 w-full max-w-full flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 py-6 sm:px-8 sm:py-8",
+              "transition-colors duration-300",
+              isLight
+                ? "text-neutral-950"
+                : "text-white",
+            ].join(" ")}
           >
-            {renderPage()}
+            <div
+              key={section}
+              className="tboyarts-slide-in-left"
+            >
+              {renderPage()}
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+
+        <AdminToast />
+      </div>
+    </AdminToastProvider>
   );
 }

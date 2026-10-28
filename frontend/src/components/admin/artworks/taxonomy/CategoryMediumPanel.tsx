@@ -4,7 +4,7 @@ import {
   MoreVertical,
   Plus,
 } from "lucide-react";
-
+import { useAdminToast } from "../../../../contexts/AdminToastContext";
 import { supabase } from "../../../../lib/supabase";
 import TaxonomyModal from "./TaxonomyModal";
 import ErrorState from "../../../errors/ErrorState";
@@ -39,6 +39,8 @@ export default function CategoryMediumPanel() {
 
   const [editingItem, setEditingItem] =
     useState<TaxonomyItem | null>(null);
+
+  const toast = useAdminToast();
 
   useEffect(() => {
     loadCategories();
@@ -160,15 +162,14 @@ export default function CategoryMediumPanel() {
 
       setModalType(null);
       setEditingItem(null);
+      toast.success("Saved successfully");
     } catch (error) {
       console.error(
         "Failed to save taxonomy:",
         error,
       );
 
-      alert(
-        `Failed to save ${modalType}.`,
-      );
+      toast.error("Failed to save");
     }
   }
 
@@ -208,15 +209,14 @@ export default function CategoryMediumPanel() {
           ),
         );
       }
+      toast.success("Deleted successfully");
     } catch (error) {
       console.error(
         `Failed to delete ${type}:`,
         error,
       );
 
-      alert(
-        `Failed to delete ${type}.`,
-      );
+      toast.error("Failed to delete");
     }
   }
 

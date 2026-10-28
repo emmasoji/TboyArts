@@ -4,7 +4,7 @@ import {
   getArtistProfile,
   saveArtistProfile,
 } from "../../../services/artistService";
-
+import { useAdminToast } from "../../../contexts/AdminToastContext";
 export default function ArtistProfileEditor() {
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("");
@@ -12,7 +12,7 @@ export default function ArtistProfileEditor() {
   const [story, setStory] = useState("");
   const [profileImage, setProfileImage] =
     useState("");
-
+  const toast = useAdminToast();
   const [loading, setLoading] =
     useState(true);
   const [saving, setSaving] =
@@ -72,11 +72,10 @@ export default function ArtistProfileEditor() {
       });
 
       setMessage("Profile saved successfully.");
+      toast.success("Saved successfully");
     } catch (error) {
-      console.error(
-        "Failed to save artist profile:",
-        error,
-      );
+      console.error("Failed to save artist profile:", error);
+      toast.error("Failed to save");
       setMessage(
         error instanceof Error
           ? error.message

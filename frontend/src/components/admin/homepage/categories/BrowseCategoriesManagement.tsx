@@ -6,7 +6,7 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
-
+import { useAdminToast } from "../../../../contexts/AdminToastContext";
 import { supabase } from "../../../../lib/supabase";
 import API_URL from "../../../../config/api";
 import { convertImageWithFreeConvert, getImageFileExtension } from "../../../../utils/convertImageWithFreeConvert";
@@ -28,7 +28,7 @@ export default function BrowseCategoriesManagement() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
-
+  const toast = useAdminToast();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -481,16 +481,10 @@ export default function BrowseCategoriesManagement() {
         ),
       );
 
-      setMessage(
-        "Browse categories saved successfully.",
-      );
-
-      await loadCategories();
+      setMessage("Browse categories saved successfully.");
+      toast.success("Saved successfully");
     } catch (err) {
-      console.error(
-        "Failed to save browse categories:",
-        err,
-      );
+      toast.error("Failed to save");
 
       setError(
         err instanceof Error

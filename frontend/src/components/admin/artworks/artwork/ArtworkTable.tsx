@@ -11,7 +11,7 @@ import {
   Trash2,
   Link,
 } from "lucide-react";
-
+import { useAdminToast } from "../../../../contexts/AdminToastContext";
 import {
   createArtwork,
   deleteArtwork,
@@ -40,6 +40,7 @@ import type {
 export default function ArtworkTable() {
   const { theme } = useAdminTheme();
   const isLight = theme === "light";
+  const toast = useAdminToast();
   const [artworks, setArtworks] =
     useState<Artwork[]>([]);
 
@@ -318,6 +319,8 @@ export default function ArtworkTable() {
           Boolean(data.customer_visible),
       });
 
+      toast.success("Saved successfully");
+
       setShowAddModal(false);
 
       await loadArtworks();
@@ -326,6 +329,8 @@ export default function ArtworkTable() {
         "Failed to add artwork:",
         err,
       );
+
+      toast.error("Failed to save");
 
       throw err;
     }
@@ -445,11 +450,15 @@ export default function ArtworkTable() {
       setEditingArtwork(null);
 
       await loadArtworks();
+
+      toast.success("Saved successfully");
     } catch (err) {
       console.error(
         "Failed to update artwork:",
         err,
       );
+
+      toast.error("Failed to save");
 
       throw err;
     }
@@ -552,11 +561,13 @@ export default function ArtworkTable() {
           newTotalPages,
         );
       });
-    } catch (err) {
+     } catch (err) {
       console.error(
         "DELETE ARTWORK ERROR:",
         err,
       );
+
+      toast.error("Failed to delete");
 
       setDeleteError(
         err instanceof Error

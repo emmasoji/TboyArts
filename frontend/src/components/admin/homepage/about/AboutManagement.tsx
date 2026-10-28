@@ -9,6 +9,7 @@ import {
   type AboutSettings,
 } from "../../../../services/homepageService";
 import ErrorState from "../../../errors/ErrorState";
+import { useAdminToast } from "../../../../contexts/AdminToastContext";
 
 export default function AboutManagement() {
   const [settings, setSettings] =
@@ -17,7 +18,7 @@ export default function AboutManagement() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
+  const toast = useAdminToast();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -94,14 +95,10 @@ export default function AboutManagement() {
         },
       );
 
-      setMessage(
-        "About settings saved successfully.",
-      );
+      setMessage("About settings saved successfully.");
+      toast.success("Saved successfully");
     } catch (err) {
-      console.error(
-        "Failed to save about settings:",
-        err,
-      );
+      toast.error("Failed to save");
 
       setError(
         err instanceof Error

@@ -7,7 +7,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
+import { useAdminToast } from "../../../contexts/AdminToastContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFacebookF,
@@ -35,7 +35,7 @@ export default function AdminSettings() {
 
   const [footer, setFooter] =
     useState<FooterSettings>(defaultFooterSettings);
-
+  const toast = useAdminToast();
   const [loadingFooter, setLoadingFooter] = useState(true);
   const [savingFooter, setSavingFooter] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -155,13 +155,15 @@ export default function AdminSettings() {
 
       setFooter(updated);
       setSaved(true);
+      toast.success("Saved successfully");
 
       window.setTimeout(() => {
         setSaved(false);
       }, 3000);
     } catch (error: unknown) {
       console.error("Failed to save site settings:", error);
-
+      toast.error("Failed to save");
+      
       const supabaseError = error as {
         message?: string;
         details?: string;
